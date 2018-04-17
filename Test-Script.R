@@ -13,7 +13,7 @@ plot(x,y)
 abline(model1, col="red", xlab = "X", ylab = "Y")
 title("Testregression")
 
-### Second Commit.
+### Second Commit...
 
 # adding new variables 
 
