@@ -21,5 +21,5 @@ bar <- diag(3)
 
 foo <- seq(100,1, -5)
 
-baz <- foo^2
+baz <- foo^2 ### good job
 
