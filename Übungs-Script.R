@@ -12,7 +12,7 @@ library(rjson)
 library(dplyr)
 
 ##########################################
-##### URL's of the dropdown-elements #####
+##### URL"s of the dropdown-elements #####
 ##########################################
 
 # erste dropdown-url für Semester
@@ -43,7 +43,7 @@ library(dplyr)
 ## Mathematik und Informatik
 # https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524294397137&type=STUDIENMODUL&path=FAK%253D5&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25
 ## Geowissenschaften und Geographie
-# https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524294424781&type=STUDIENMODUL&path=FAK%253D8&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25
+# v
 ## Forstwissenschaften und Waldökologie
 # https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524294461661&type=STUDIENMODUL&path=FAK%253D10&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25
 ## Chemie
@@ -107,9 +107,44 @@ faculty <- fac_fun(fac_raw)
 ### Remark: The package jsonlite gives the same result as using the package
 ### rjson and writing the functions
 
-
-
-###################
+### Result
 
 semester
 faculty
+
+
+
+##############################################################
+##### Creating the data for the faculty specific modules #####
+##############################################################
+
+
+library(jsonlite)  
+
+## create a vector with the module-URL for each faculty
+
+url <- "https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524294424781&type=STUDIENMODUL&path=FAK%253D8&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25"
+
+url_part1 <- substr(url, start=1, stop=130)
+url_part2 <- substr(url, start=132, stop=nchar(url))
+
+module_vec <- rep(NA, length(faculty[,2]))
+  
+for (i in 1:length(faculty[,2])) {
+  module_vec[i] <- paste(url_part1, sort(faculty[,2])[i] , url_part2, sep = "")
+}
+
+module_vec
+
+## create a list with dataframes for ech faculty which contain the information for faclty specific modules
+
+all_modules <- list(NA)
+
+for (i in 1:length(faculty[,2])) {
+  all_modules[[i]] <- fromJSON(readLines(module_vec[i]))
+}
+
+### Result
+
+all_modules
+
