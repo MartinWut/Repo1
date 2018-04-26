@@ -104,7 +104,7 @@ fac_fun <- function(x) { # x is the list of semester data (= semester_raw)
 
 faculty <- fac_fun(fac_raw)
 
-### Remark: The package jsonlite dgives the same result as using the package
+### Remark: The package jsonlite gives the same result as using the package
 ### rjson and writing the functions
 
 
