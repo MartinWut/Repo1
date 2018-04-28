@@ -43,7 +43,7 @@ library(dplyr)
 ## Mathematik und Informatik
 # https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524294397137&type=STUDIENMODUL&path=FAK%253D5&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25
 ## Geowissenschaften und Geographie
-# v
+# 
 ## Forstwissenschaften und Waldökologie
 # https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524294461661&type=STUDIENMODUL&path=FAK%253D10&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25
 ## Chemie
@@ -111,7 +111,7 @@ faculty <- fac_fun(fac_raw)
 
 semester
 faculty
-
+sort(faculty)
 
 
 ##############################################################
@@ -136,7 +136,7 @@ for (i in 1:length(faculty[,2])) {
 
 module_vec
 
-## create a list with dataframes for ech faculty which contain the information for faclty specific modules
+## create a list with dataframes for each faculty which contain the information for the faculty specific modules
 
 all_modules <- list(NA)
 
@@ -144,7 +144,11 @@ for (i in 1:length(faculty[,2])) {
   all_modules[[i]] <- fromJSON(readLines(module_vec[i]))
 }
 
-### Result
+for (i in 1:length(faculty[,2])) {
+  names(all_modules) <- c(arrange(faculty, Value)[,1])
+}
+
+### Result: all_modules contains the information for every module of each faculty
 
 all_modules
 
