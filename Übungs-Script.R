@@ -7,7 +7,7 @@ setwd("/Users/martinwutke/Desktop/Git/MyFolder/Repo1/Repo1")
 # install.packages("dplyr")
 
 #library(jsonlite)
-#library(httr)
+library(httr)
 library(rjson)
 library(dplyr)
 
@@ -80,7 +80,7 @@ semester_fun <- function(x) { # x is the list of semester data (= semester_raw)
   return(semester_df)
 }
 
-semester <- semester_fun(semester_raw)
+semester_vec <- semester_fun(semester_raw)
 
 ### Creating a Dataframe of the faculties
 
@@ -102,16 +102,16 @@ fac_fun <- function(x) { # x is the list of semester data (= semester_raw)
   return(fac_df)
 }
 
-faculty <- fac_fun(fac_raw)
+faculty_vec <- fac_fun(fac_raw)
 
 ### Remark: The package jsonlite gives the same result as using the package
 ### rjson and writing the functions
 
 ### Result
 
-semester
-faculty
-sort(faculty)
+semester_vec
+faculty_vec
+sort(faculty_vec[,2])
 
 
 ##############################################################
@@ -128,10 +128,10 @@ url <- "https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdo
 url_part1 <- substr(url, start=1, stop=130)
 url_part2 <- substr(url, start=132, stop=nchar(url))
 
-module_vec <- rep(NA, length(faculty[,2]))
+module_vec <- rep(NA, length(faculty_vec[,2]))
   
-for (i in 1:length(faculty[,2])) {
-  module_vec[i] <- paste(url_part1, sort(faculty[,2])[i] , url_part2, sep = "")
+for (i in 1:length(faculty_vec[,2])) {
+  module_vec[i] <- paste(url_part1, sort(faculty_vec[,2])[i] , url_part2, sep = "")
 }
 
 module_vec
@@ -140,15 +140,59 @@ module_vec
 
 all_modules <- list(NA)
 
-for (i in 1:length(faculty[,2])) {
+for (i in 1:length(faculty_vec[,2])) {
   all_modules[[i]] <- fromJSON(readLines(module_vec[i]))
 }
 
-for (i in 1:length(faculty[,2])) {
-  names(all_modules) <- c(arrange(faculty, Value)[,1])
+names(all_modules) <- c(arrange(faculty_vec, Value)[,1])
+
+### Result: all_modules contains the information for every module of the faculties
+
+#####################################################
+##### Defining a function for a single request  #####
+#####################################################
+
+single_request <- function(Semester, Fakultät, Modul){
+  resultsURL <- "https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/queryexecution/results"
+  requestJSON <- readChar("request.json", file.info("request.json")$size)
+  #modulesDataFrame <- all_modules[[Fakultät]] #### hier die gewünschte Fakultät angegeben. Bsp.: all_modules$`Theologische Fakultät`
+
+  records <- data.frame(matrix(nrow = 0, ncol = 21))
+  
+  facultyString <- paste0('"lastValue":"',subset(faculty_vec[,2], faculty_vec[,1] == Fakultät | faculty_vec[,2] == Fakultät) , '"') ### Hier den Wert der Fakultät angeben
+  thisRequestJSON <- sub('"lastValue":"12"', facultyString, requestJSON)
+  
+  moduleString <- paste0('"lastValue":"', Modul, '"') ### Hier den Wert des Modules angeben
+  thisRequestJSON <- sub('"lastValue":"112"', moduleString, requestJSON)
+  
+  semesterString <- paste0('"lastValue":"', subset(semester_vec[,2], semester_vec[,1] == Semester), '"') ### Hier den Wert des Semesters angeben 
+  thisRequestJSON <- sub('"lastValue":"60"', semesterString, thisRequestJSON)
+  
+  bodyList <- list(data = thisRequestJSON)
+  request <- POST(resultsURL, body = bodyList, encode = "form")
+  stop_for_status(request)
+  
+  responseJSON <- content(request, encoding = "UTF-8", type = "text")
+  responseDataFrame <- fromJSON(responseJSON)$data$records
+  results <<- data.frame(matrix(nrow = max(length(Semester),length(Fakultät), length(Modul)), ncol = 21))
+  results <- responseDataFrame
+  return(results)
 }
 
-### Result: all_modules contains the information for every module of each faculty
+test <- single_request("WS 2016/2017", 14, 104)
+test
 
-all_modules
+## Beispiel: Schnitt über alle Semester des Moduls "Produktion und Logistik (Wiwi-Fakultät (14)) (Value 115)
 
+res <- data.frame(matrix(nrow = length(semester_vec[,1]), ncol = 21))
+for (i in 1:length(semester_vec[,1])) {
+  if (class(single_request(semester_vec[i,1], 14, 115)) == "data.frame") {
+    res[i,] <- single_request(semester_vec[i,1], 14, 115)
+  }
+}
+
+colnames(res) <- colnames(test)
+res$Notenschnitt
+str(res$Notenschnitt)
+tmp <- subset(as.numeric(res$Notenschnitt), as.numeric(res$Notenschnitt) != "NA")
+mean(tmp)
