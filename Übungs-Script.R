@@ -6,9 +6,9 @@ setwd("/Users/martinwutke/Desktop/Git/MyFolder/Repo1/Repo1")
 # install.packages("rjson")
 # install.packages("dplyr")
 
-#library(jsonlite)
+library(jsonlite)
 library(httr)
-library(rjson)
+#library(rjson)
 library(dplyr)
 
 ##########################################
@@ -61,51 +61,11 @@ library(dplyr)
 
 ### Creating a Dataframe of the semesternumber
 
-## reading the raw data
-semester_raw <- fromJSON(readLines("https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524293694665&type=SEMESTERNR&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25"))
-
-semester_label <- rep(0, length(semester_raw))
-semester_value <- rep(0, length(semester_raw))
-
-## creating the dataframe 
-semester_fun <- function(x) { # x is the list of semester data (= semester_raw)
-  for (i in 1:length(x)) {
-    semester_label[i] <- x[[i]]$label
-    semester_value[i] <- x[[i]]$value
-  }
-  semester_df <- data.frame(semester_label, semester_value)
-  semester_df <- rename(semester_df, Semester = semester_label, Value = semester_value )
-  semester_df[1] <- semester_label
-  semester_df[2] <- semester_value
-  return(semester_df)
-}
-
-semester_vec <- semester_fun(semester_raw)
+semester_vec <- fromJSON(readLines("https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524293694665&type=SEMESTERNR&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25"))
 
 ### Creating a Dataframe of the faculties
 
-fac_raw <- fromJSON(readLines("https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524293694760&type=FAK&path=&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25"))
-
-fac_label <- rep(0, length(fac_raw))
-fac_value <- rep(0, length(fac_raw))
-
-## creating the dataframe 
-fac_fun <- function(x) { # x is the list of semester data (= semester_raw)
-  for (i in 1:length(x)) {
-    fac_label[i] <- x[[i]]$label
-    fac_value[i] <- as.numeric(x[[i]]$value)
-  }
-  fac_df <- data.frame(fac_label, fac_value)
-  fac_df <- rename(fac_df, Faculty = fac_label, Value = fac_value )
-  fac_df[1] <- fac_label
-  fac_df[2] <- fac_value
-  return(fac_df)
-}
-
-faculty_vec <- fac_fun(fac_raw)
-
-### Remark: The package jsonlite gives the same result as using the package
-### rjson and writing the functions
+faculty_vec <- fromJSON(readLines("https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1524293694760&type=FAK&path=&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25"))
 
 ### Result
 
@@ -114,12 +74,11 @@ faculty_vec
 sort(faculty_vec[,2])
 
 
+
 ##############################################################
 ##### Creating the data for the faculty specific modules #####
 ##############################################################
 
-
-library(jsonlite)  
 
 ## create a vector with the module-URL for each faculty
 
@@ -144,7 +103,7 @@ for (i in 1:length(faculty_vec[,2])) {
   all_modules[[i]] <- fromJSON(readLines(module_vec[i]))
 }
 
-names(all_modules) <- c(arrange(faculty_vec, Value)[,1])
+names(all_modules) <- c(arrange(faculty_vec, value)[,1])
 
 ### Result: all_modules contains the information for every module of the faculties
 
@@ -176,13 +135,14 @@ single_request <- function(Semester, Fakultät, Modul){
   responseDataFrame <- fromJSON(responseJSON)$data$records
   results <<- data.frame(matrix(nrow = max(length(Semester),length(Fakultät), length(Modul)), ncol = 21))
   results <- responseDataFrame
+  #results <- results[,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
   return(results)
 }
 
 test <- single_request("WS 2016/2017", 14, 104)
 test
 
-## Beispiel: Schnitt über alle Semester des Moduls "Produktion und Logistik (Wiwi-Fakultät (14)) (Value 115)
+## Example: all semesters: "Produktion und Logistik (Wiwi-Fakultät (14)) (Value 115)
 
 res <- data.frame(matrix(nrow = length(semester_vec[,1]), ncol = 21))
 for (i in 1:length(semester_vec[,1])) {
@@ -191,8 +151,44 @@ for (i in 1:length(semester_vec[,1])) {
   }
 }
 
-colnames(res) <- colnames(test)
+# compute the mean
 res$Notenschnitt
 str(res$Notenschnitt)
 tmp <- subset(as.numeric(res$Notenschnitt), as.numeric(res$Notenschnitt) != "NA")
 mean(tmp)
+
+
+
+## Example II: Mean of all grades of the Wiwi-Faculty between SS 2010 (value 19) and WS 2017 (value 4)
+
+res2 <- list(NA) # store every semester in a seperate list
+
+for (i in 4:19) {
+  for (j in 1:679) {
+    if (class(single_request(semester_vec[i,1],14,all_modules[[4]][j,2])) == "data.frame") {
+      res[j,] <- single_request(semester_vec[i,1],14,all_modules[[4]][j,2])
+    }
+  }
+  res2[[i]] <- res
+  res2[[i]] <- res2[[i]][,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
+  colnames(res2[[i]]) <- colnames(test)
+}
+
+for (i in 1:length) {
+  if (class(res2[[i]]) == "data.frame") {
+    res2[[i]] <- res2[[i]][,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
+    colnames(res2[[i]]) <- colnames(test)
+  }
+}
+
+# calculate the overall mean for every semester
+
+mean_df <- data.frame(matrix(nrow = length(res2[[4]][,1]) ,ncol = length(4:19)))
+tmp <- rep(NA, length(4:19))
+for (i in 1:16) {
+  mean_df[,i] <- as.numeric(unlist(res2[[3+i]]$Notenschnitt))
+  tmp[i] <- mean(subset(mean_df[,i], mean_df[i] != "NA"))
+  overall_mean <- mean(tmp)
+}
+
+overall_mean
