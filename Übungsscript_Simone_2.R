@@ -1,4 +1,4 @@
-setwd("C:/Users/gerle/Desktop/Statistische Programmierung mit R/?bung_Flexstat")
+setwd("C:/Users/gerle/Desktop/Statistische Programmierung mit R/Übung_Flexstat")
 getwd()
 
 #library(jsonlite)
@@ -59,7 +59,7 @@ give_faculty <- function(name){
   return(value)
 }
 
-give_faculty("Wirtschaftswissenschaftliche Fakult?t")
+give_faculty("Wirtschaftswissenschaftliche Fakultät")
 
 
 #### get module url and divide url in characters before (url_part1) and after character number (url_part2) ####
@@ -169,18 +169,123 @@ faculty_mean <- function(semester, faculty, module_vec){
   return(mean_val)
 }
 
-faculty_mean(66, 12, module_vec)   #mean for WIWI faculty in WS 2017/2018
+WiWi <- faculty_mean(66, 12, module_vec)   #mean for WIWI faculty in WS 2017/2018
+WiWi
+class(WiWi)
+
+## Compute the mean for all modules of one faculty for one semesters without module_vec as argument ##
+
+faculty_mean2 <- function(semester, faculty){
+  module_list <- list_modules(faculty)
+  module_vec <- as.numeric(module_list$value)
+  res_allMod <- lapply(module_vec, module_data, semester = semester, faculty = faculty)
+  grade_entries <- sapply(res_allMod, function(x){x[18]})
+  grades <- list()
+  for (i in grade_entries) {                  #throw out all list element without a grade entry
+    for (j in i) {
+      if(!is.null(j) && j != "-"){
+        grades[i] <- j
+      }
+    }
+  }
+  mean_vec <- as.numeric(grades)
+  mean_val <- mean(mean_vec, na.rm = T)
+  return(mean_val)
+}
+
+WiWi <- faculty_mean2(66, 12)
+WiWi
+
+Agrar <- faculty_mean2(66, 11)
+Agrar
+
+BioPsych <- faculty_mean2(66, 9)
+BioPsych
+
+Chemie <- faculty_mean2(66, 7)
+Chemie
+
+ForstWald <- faculty_mean2(66, 10)
+ForstWald
+
+Geo <- faculty_mean2(66, 8)
+Geo
+
+MatheInf <- faculty_mean2(66, 5)
+MatheInf
+
+Physik <- faculty_mean2(66, 6)
+Physik
+
+ZentrEinricht <- faculty_mean2(66, 17)
+ZentrEinricht
+
+Jura <- faculty_mean2(66, 2)
+Jura
+
+Medizin <- faculty_mean2(66, 3)
+Medizin
+
+Philo <- faculty_mean2(66, 4)
+Philo
+
+SoWi <- faculty_mean2(66, 13)
+SoWi
+
+Theo <- faculty_mean2(66, 1)
+Theo
+
+facMeansWS17 <- c(Agrar, BioPsych, Chemie, ForstWald, Geo, MatheInf, Physik, ZentrEinricht, Jura, Medizin, Philo, SoWi, Theo, WiWi)
+facMeansWS17 
+
+WS1718_means <- faculty_df
+WS1718_means$mean <- facMeansWS17
+WS1718_means <- WS1718_means[order(WS1718_means$mean),]
+WS1718_means
+
+write.csv(WS1718_means, "WS1718_faculty_means.csv", row.names = F)
 
 
-#### Compare the faculty means for one semester ####
+#### Compute the mean for all modules of one faculty for all semesters ####
+
+faculty_meanSem <- function(semester_vec, faculty){
+  semester_mean <- c()
+  module_list <- list_modules(faculty)
+  module_vec <- as.numeric(module_list$value)
+  for (i in semester_vec) {
+    res_allMod <- lapply(module_vec, module_data, semester = semester_vec[i], faculty = faculty)
+    grade_entries <- sapply(res_allMod, function(x){x[18]})
+    grades <- list()
+    for (j in grade_entries) {
+      for (k in j) {
+        if(!is.null(k) && k != "-"){
+          grades[j] <- k
+        }
+      }
+    }
+    mean_vec <- as.numeric(grades)
+    mean_val <- mean(mean_vec, na.rm = T)
+    semester_mean[i] <- mean_val
+  }
+  overall_mean <- mean(semester_mean, na.rm = T)
+  return(overall_mean)
+}
+
+semester_vec
+
+WiWi_allSem <- faculty_meanSem(semester_vec, 12)
+
+
+#### Compare the faculty means for one semesters ####
 
 faculty_vec <- faculty_df$value
 faculty_vec
 class(faculty_vec)
 
-means_df <- faculty_df
-means_df$means <- NA
-means_df
+#means_df <- faculty_df
+#means_df$means <- NA
+#means_df
+#means_df$value[7]
 
 faculty_semCompare <- function(faculty_vec, semester){
   means_df <- faculty_df
@@ -195,7 +300,18 @@ faculty_semCompare <- function(faculty_vec, semester){
   return(means_df[,c(1, 3)])
 }
 
-faculty_semCompare(faculty_vec, 66)
+faculty_semCompare <- function(faculty_vec, semester){
+  mean_vector <- c()
+  for (i in faculty_vec) {
+    module_list <- list_modules(faculty_vec[i])
+    module_vec <- as.numeric(module_list$value)
+    fac_mean <- lapply(module_vec, faculty_mean, semester = semester, faculty = faculty_vec[i])
+    mean_vector[i] <- fac_mean
+  }
+  return(mean_vector)
+}
+
+WS1718 <- faculty_semCompare(faculty_vec, 66)
 
 
 faculty_semCompare <- function(faculty_vec, semester){
@@ -222,3 +338,47 @@ faculty_semCompare <- function(faculty_vec, semester){
 }
 
 faculty_semCompare(faculty_vec, 66)
+
+
+
+#### Compare the faculty means for all semesters ####
+
+faculty_vec <- faculty_df$value
+faculty_vec
+class(faculty_vec)
+
+faculty_compare <- function(faculty_vec, semester_vec){
+  means <- c()
+  for (i in faculty_vec) {
+    for (j in semester_vec) {
+      module_vec <- as.numeric(list_modules(faculty_vec[i])$value)
+    }
+  }
+}
+
+faculty_compare(faculty_vec, semester_vec)
+
+
+#### Compute the mean for all modules of one faculty for all semesters ####
+
+
+
+
+
+#### Compare the faculty means for one semesters ####
+
+faculty_vec <- faculty_df$value
+faculty_vec
+class(faculty_vec)
+
+module_vec
+
+lapply(faculty_vec, faculty_mean, semester = 66, module_vec = module_vec)
+
+
+#### Which faculty has the best mean grade -- for one specific semester ####
+
+faculty_vec <- faculty_df$value
+faculty_vec
+class(faculty_vec)
+
