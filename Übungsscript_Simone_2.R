@@ -171,3 +171,54 @@ faculty_mean <- function(semester, faculty, module_vec){
 
 faculty_mean(66, 12, module_vec)   #mean for WIWI faculty in WS 2017/2018
 
+
+#### Compare the faculty means for one semester ####
+
+faculty_vec <- faculty_df$value
+faculty_vec
+class(faculty_vec)
+
+means_df <- faculty_df
+means_df$means <- NA
+means_df
+
+faculty_semCompare <- function(faculty_vec, semester){
+  means_df <- faculty_df
+  means_df$means <- NA
+  for (i in faculty_vec) {
+    module_list <- list_modules(faculty_vec[i])
+    module_vec <- as.numeric(module_list$value)
+    fac_mean <- lapply(module_vec, faculty_mean, semester = semester, faculty = faculty_vec[i])
+    means_df$means[i] <- fac_mean
+  }
+  means_df <- means_df[order(means_df$means),]
+  return(means_df[,c(1, 3)])
+}
+
+faculty_semCompare(faculty_vec, 66)
+
+
+faculty_semCompare <- function(faculty_vec, semester){
+  means_df <- faculty_df
+  means_df$means <- NA
+  for (i in faculty_vec) {
+    module_list <- list_modules(faculty_vec[i])
+    module_vec <- as.numeric(module_list$value)
+    res_allMod <- lapply(module_vec, module_data, semester = semester, faculty = faculty_vec[i])
+    grade_entries <- sapply(res_allMod, function(x){x[18]})
+    grades <- list()
+    for (j in grade_entries) {
+      for (k in j) {
+        if(!is.null(k) && k != "-"){
+          grades[j] <- k
+        }
+      }
+    }
+    mean_vec <- as.numeric(grades)
+    mean_val <- mean(mean_vec, na.rm = T)
+    means_df$means[i] <- mean_val
+  }
+  return(means_df[,c(1,3)])
+}
+
+faculty_semCompare(faculty_vec, 66)
