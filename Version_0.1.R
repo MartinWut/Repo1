@@ -34,7 +34,30 @@ give_semester <- function(name){
   return(value)
 }
 
-give_semester("WS 2017/2018")
+give_semester("WS 2016/2017")
+
+
+
+############################################
+###### all-in-one Semester - Function ######
+############################################
+
+semester_data <- function(x){ # input either "all" or a certain semester in form of "Semesterterm year" (e.g. "WS 2016/2017")
+  
+  semester_get <- GET("https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1525710916076&type=SEMESTERNR&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25")
+  semester_df <- jsonlite::fromJSON(txt = content(semester_get, as="text"))
+  semester_df$value <- as.numeric(semester_df$value)
+  head(semester_df)
+  if (x == "all") {
+    return(semester_df)
+  }else{
+    if (any(x == semester_df$label)) {
+      return(semester_df$value[semester_df$label==x])
+    }else{
+      stop("Input not in the correct form. Put in \"all\" or \n \"semesterterm year\" ")
+    }
+    }
+}
 
 
 #### get faculties ####
@@ -116,7 +139,7 @@ module_data <- function(semester, faculty, module){
   return(responseDF)
 }
 
-
+a <- module_data(64, 12,14)
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
 ##########################################
