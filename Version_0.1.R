@@ -248,6 +248,36 @@ faculty_meanSem <- function(semester_vec, faculty){
   return(overall_mean)
 }
 
+#debugging (still needs to be tested!)
+faculty_meanSem <- function(semester_vec, faculty){
+  semester_mean <- c()
+  module_list <- list_modules(faculty)
+  module_vec <- as.numeric(module_list$value)
+  for (i in semester_vec) {
+    res_allMod <- lapply(module_vec, module_data, semester = semester_vec[i], faculty = faculty)
+    grade_entries <- sapply(res_allMod, function(x){print(x[18])})
+    grades <- unlist(sapply(grade_entries, function(x) print(x[!is.null(x)])))
+    grades <- grades[grades != "-" & grades != ""] 
+    print(grades)
+    mean_vec <- as.numeric(grades)
+    print(mean_vec)
+    mean_val <- mean(mean_vec, na.rm = T)
+    print(mean_val)
+    semester_mean[i] <- mean_val
+    print(semester_mean[i])
+  }
+  overall_mean <- mean(semester_mean, na.rm = T)
+  print(overall_mean)
+  return(overall_mean)
+}
+
+semester_vec <- semester_df$value
+semester_vec2 <- semester_vec[4:length(semester_vec)] #WS 2017/18 (4. Element) bis WS 2003/4
+semester_vec2
+
+
+WiWi_allSem <- faculty_meanSem(semester_vec2, 12)
+
 
 ##########################################
 ## 5. Compare faculty means: 1 semester ##
@@ -272,10 +302,22 @@ faculty_semCompare <- function(faculty_vec, semester){
 }
 
 
+#############################################################
+## 6. Compare examiners: 1 faculty, 1 module, > 1 semester ##
+#############################################################
 
+examiner_compare <- function(sem_vec, faculty, module){
+  res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
+  examiner_entries <- unlist(sapply(res_allSem, function(x){x[15]}))            #extract elements for "Prüfer" (entry 15 in each list element)
+  grade_entries <- unlist(sapply(res_allSem, function(x){x[18]}))
+  grade_entries <- gsub("-", NA,  grade_entries)
+  grade_entries <- as.numeric(gsub("-", NA,  grade_entries))
+  res_df <- na.omit(data.frame(examiner_entries, grade_entries))
+  ex_comp <- sort(tapply(res_df$grade_entries, list(res_df$examiner_entries), mean))
+  return(ex_comp)
+}
 
-
-
+examiner_compare(semester_vec2, 12, 217)
 
 
 
