@@ -6,6 +6,9 @@ library(httr)
 #library(rjson)
 library(jsonlite)
 library(dplyr)
+#install.packages("zoo")
+library("zoo")
+
 
 #############################################################
 ## 1. Functions for accessing semsters, faculties, modules ##
@@ -60,7 +63,7 @@ semester_data <- function(x){ # input either "all" or a certain semester in form
 }
 
 semester_data("WS 2016/2017")
-
+semester_data("all")$value
 
 #### get faculties ####
 
@@ -106,7 +109,7 @@ faculty_data <- function(x){# input either "all" or a certain faculty (e.g. "Wir
   }
 }
 
-faculty_data("Wirtschaftswissenschaftliche Fakultät")
+faculty_data("Medizinische Fakultät") ### noch beheben: Fehler bei bestimmten Fakultäten. Bsp. "Medizinische Fakultät"
 
 
 
@@ -130,7 +133,7 @@ list_modules <- function(faculty){
   return(module_df)
 }
 
-list_modules(12)
+View(list_modules(12))
 
 
 ########################################
@@ -166,7 +169,6 @@ module_data <- function(semester, faculty, module){
 ÖkoI <- module_data(64, 12, 217)
 ÖkoI
 
-a <- module_data(64, 12,14)
 
 
 ##########################################
@@ -317,10 +319,68 @@ examiner_compare <- function(sem_vec, faculty, module){
   return(ex_comp)
 }
 
-examiner_compare(semester_vec2, 12, 217)
+
+### e.g. Compare examiners
+examiner_math_ba <- examiner_compare(semester_data("all")$value, 12, 104)
+examiner_math_ba
 
 
 
+
+
+
+############################################################################
+## 7. Compare exmas (1. and 2. date): 1 faculty, > 1 module, > 1 semester ##
+############################################################################
+
+date_compare <- function(sem_vec, faculty, module){
+  res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
+  # save the infomrations in date.frame
+  sem_info <- unlist(sapply(res_allSem, function(x){x[17]}))
+  date_info <- unlist(sapply(res_allSem, function(x){x[12]}))
+  mean_info  <- as.numeric(unlist(sapply(res_allSem, function(x){x[18]})))
+  info_df <- data.frame(sem_info,date_info, mean_info) 
+  info_df <- na.omit(info_df)
+  info_df$date_info <- as.Date(info_df[,2], "%d.%m.%Y") 
+  # extract the information for the second date
+  second_mean_all <- data.frame(matrix(ncol = 1))
+  for (i in 1:(length(info_df[,1])-1 )) {
+    if (info_df[i,1] == info_df[i+1,1]) {
+      second_mean_all[i,] <- info_df[i,3]  
+    }
+  }
+  # compute mean for second date
+  second_mean_all <- na.omit(second_mean_all)
+  second_mean_all <- as.numeric(second_mean_all[,1])
+  second_mean <- mean(second_mean_all)
+  # extract the information for the first date
+  first_mean_all <- data.frame(matrix(ncol = 1))
+  for (i in 1:(length(info_df[,1])-1 )) {
+    if (info_df[i,1] == info_df[i+1,1]) {
+      first_mean_all[i,] <- info_df[i+1,3]  
+    }
+  }
+  # compute mean for second date
+  first_mean_all <- na.omit(first_mean_all)
+  first_mean_all <- as.numeric(first_mean_all[,1])
+  first_mean <- mean(first_mean_all)
+  result <- data.frame(first_mean, second_mean)
+  return(result)
+}
+
+## Test with Module Mathematics from Wiwi-Faculty
+date_compare(semester_df$value, 12,104)
+
+
+
+
+
+
+
+
+#################################################
+#################################################
+#################################################
 #################################################
 #### Alternativ: eine Funktion -> gelooped ######
 #################################################
@@ -431,8 +491,10 @@ for (i in 1:length(semester_vec[,1])) {
   }
 }
 
+
+
 View(res) # Result
-res$
+
 
 # compute the mean
 res$X18
