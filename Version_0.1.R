@@ -8,7 +8,7 @@ library(jsonlite)
 library(dplyr)
 #install.packages("zoo")
 library("zoo")
-
+library("ggplot2")
 
 #############################################################
 ## 1. Functions for accessing semsters, faculties, modules ##
@@ -308,7 +308,7 @@ faculty_semCompare <- function(faculty_vec, semester){
 ## 6. Compare examiners: 1 faculty, 1 module, > 1 semester ##
 #############################################################
 
-examiner_compare <- function(sem_vec, faculty, module){
+examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
   res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
   examiner_entries <- unlist(sapply(res_allSem, function(x){x[15]}))            #extract elements for "Prüfer" (entry 15 in each list element)
   grade_entries <- unlist(sapply(res_allSem, function(x){x[18]}))
@@ -316,21 +316,22 @@ examiner_compare <- function(sem_vec, faculty, module){
   grade_entries <- as.numeric(gsub("-", NA,  grade_entries))
   res_df <- na.omit(data.frame(examiner_entries, grade_entries))
   ex_comp <- sort(tapply(res_df$grade_entries, list(res_df$examiner_entries), mean))
-  return(ex_comp)
+  if (plot==FALSE) {
+    return(ex_comp)
+  }else{
+    name_exam <- rownames(ex_comp)
+    plot(a$name_exam, examiner_math_ba, main="Examiners by means")
+  }
 }
 
 
 ### e.g. Compare examiners
-examiner_math_ba <- examiner_compare(semester_data("all")$value, 12, 104)
+examiner_math_ba <- examiner_compare(semester_data("all")$value, 12, 104, plot = TRUE)
 examiner_math_ba
 
 
-
-
-
-
 ############################################################################
-## 7. Compare exmas (1. and 2. date): 1 faculty, > 1 module, > 1 semester ##
+## 7. Compare exams (1. and 2. date): 1 faculty, > 1 module, > 1 semester ##
 ############################################################################
 
 date_compare <- function(sem_vec, faculty, module){
