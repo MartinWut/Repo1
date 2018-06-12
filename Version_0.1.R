@@ -109,6 +109,7 @@ faculty_data <- function(x){# input either "all" or a certain faculty (e.g. "Wir
   }
 }
 
+
 faculty_data("Medizinische Fakultät") ### noch beheben: Fehler bei bestimmten Fakultäten. Bsp. "Medizinische Fakultät"
 
 
@@ -329,9 +330,39 @@ examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
 examiner_math_ba <- examiner_compare(semester_data("all")$value, 12, 104, plot = TRUE)
 examiner_math_ba
 
+### Compare examiners for "Interne Unternehmensrechnung" (113) just wintersemesters
+
+# select just the wintersemesters
+semester_winter <- semester_df$value[seq(1,length(semester_df$value),2)] 
+
+exam_intern_wi <- examiner_compare(semester_winter, 12, 113)
+
+###################################################################################
+## 7. Compare examiners by number of students: 1 faculty, 1 module, > 1 semester ##
+###################################################################################
+
+examiner_stud <- function(sem_vec, faculty, module,mean=TRUE, plot=FALSE){
+  res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
+  examiner_entries <- unlist(sapply(res_allSem, function(x){x[15]}))            #extract elements for "Prüfer" (entry 15 in each list element)
+  stud_entries <- unlist(sapply(res_allSem, function(x){x[20]}))
+  stud_entries <- gsub("-", NA,  stud_entries)
+  stud_entries <- as.numeric(gsub("-", NA,  stud_entries))
+  sem_info <- unlist(sapply(res_allSem, function(x){x[17]}))
+  res_df <- na.omit(data.frame(sem_info,examiner_entries, stud_entries))
+  ex_comp <- sort(tapply(res_df$stud_entries, list(res_df$examiner_entries), mean))
+  if (mean==TRUE) {
+    return(ex_comp)
+  }else{
+    return(res_df)
+  }
+}
+
+examiner_stud(semester_winter, 12, 113,mean=FALSE)
+
+
 
 ############################################################################
-## 7. Compare exams (1. and 2. date): 1 faculty, > 1 module, > 1 semester ##
+## 8. Compare exams (1. and 2. date): 1 faculty, > 1 module, > 1 semester ##
 ############################################################################
 
 date_compare <- function(sem_vec, faculty, module){
