@@ -360,7 +360,6 @@ examiner_stud <- function(sem_vec, faculty, module,mean=TRUE, plot=FALSE){
 examiner_stud(semester_winter, 12, 113,mean=FALSE)
 
 
-
 ############################################################################
 ## 8. Compare exams (1. and 2. date): 1 faculty, > 1 module, > 1 semester ##
 ############################################################################
