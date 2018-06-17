@@ -63,7 +63,7 @@ semester_data <- function(x){ # input either "all" or a certain semester in form
 }
 
 semester_data("WS 2016/2017")
-semester_data("all")$value
+semester_data("all")
 
 #### get faculties ####
 
@@ -134,6 +134,8 @@ list_modules <- function(faculty){
   return(module_df)
 }
 
+list_modules(12)
+
 View(list_modules(12))
 
 
@@ -187,6 +189,12 @@ module_mean <- function(sem_vec, faculty, module){
 }
 
 
+semester_vec <- semester_df$value
+semester_vec2 <- semester_vec[4:length(semester_vec)]  #WS 2017/18 (4. Element) bis WS 2003/4
+
+module_mean(semester_vec2, 12, 217)
+
+
 ##########################################
 ## 4. 1 faculty, > 1 module, 1 semester ##
 ##########################################
@@ -212,6 +220,9 @@ faculty_mean <- function(semester, faculty, module_vec = as.numeric(list_modules
 }
 
 module_vec <- as.numeric(list_modules(12)$value)
+
+faculty_mean(66, 12, module_vec)
+faculty_mean(66, 12)
 
 # Compute the mean for all modules of one faculty for one semesters without module_vec as argument #
 
@@ -280,6 +291,45 @@ semester_vec2
 
 
 WiWi_allSem <- faculty_meanSem(semester_vec2, 12)
+
+debug(faculty_meanSem)
+faculty_meanSem(semester_vec2, 12)
+undebug(faculty_meanSem)
+
+?browser()
+faculty_meanSem <- function(semester_vec, faculty){
+  browser()
+  semester_mean <- c()
+  browser()
+  module_list <- list_modules(faculty)
+  browser()
+  module_vec <- as.numeric(module_list$value)
+  for (i in semester_vec) {
+    browser()
+    res_allMod <- lapply(module_vec, module_data, semester = semester_vec[i], faculty = faculty)
+    #Funktion bleibt hier hängen (aber keine Fehlermeldung!)
+    browser()
+    grade_entries <- sapply(res_allMod, function(x){x[18]})
+    browser()
+    grades <- unlist(sapply(grade_entries, function(x) x[!is.null(x)]))
+    browser()
+    grades <- grades[grades != "-" & grades != ""] 
+    browser()
+    mean_vec <- as.numeric(grades)
+    browser()
+    mean_val <- mean(mean_vec, na.rm = T)
+    browser()
+    semester_mean[i] <- mean_val
+    browser()
+  }
+  browser()
+  overall_mean <- mean(semester_mean, na.rm = T)
+  browser()
+  return(overall_mean)
+  browser()
+}
+
+faculty_meanSem(semester_vec2, 12)
 
 
 ##########################################
