@@ -239,6 +239,45 @@ faculty_mean(66, 12)
 #}
 
 
+### Compare different faculty means for one semester by using faculty_mean - function
+
+
+result_vec <- data.frame(matrix(nrow =1, ncol = 3 ))
+colnames(result_vec) <- faculty_df[c(12:14),1]
+tmp <- sapply(faculty_df[c(12:14),2], faculty_mean, semester=66)
+for (i in 1:length(tmp)) {
+  result_vec[,i] <- tmp[i]
+}
+
+result_vec
+
+### compare the same faculties over 3 Semesters (values: 64-66 -> WS 2016/2017; SS 2017; WS 2017/2018 )
+# time needed: round about 10 minutes
+semester_vec_test <- semester_df$value[c(5:7)]
+faculty_vec_test <- faculty_df[c(12:14),2]
+result_df <- data.frame(matrix(nrow =3, ncol = 3 )) # change nrows to 3 for 3 semesters
+colnames(result_df) <- faculty_df[c(12:14),1]
+
+
+
+
+for (i in 1:3) { 
+  for (j in 1:3) {
+    result_df[i,j] <- sapply(faculty_vec_test[j], faculty_mean, semester=semester_vec_test[i])
+  }
+}
+result_df
+
+mean_results <- matrix(nrow = 1,ncol = 3)
+colnames(mean_results) <- colnames(result_df)
+
+for (i in 1:3) {
+  mean_results[,i] <- mean(result_df[,i])
+}
+
+mean_results
+
+
 
 ############################################
 ## 4. 1 faculty, > 1 module, > 1 semester ##
