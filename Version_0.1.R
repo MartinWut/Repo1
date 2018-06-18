@@ -398,11 +398,27 @@ faculty_semCompare <- function(faculty_vec, semester){
 ## 6. Compare examiners: 1 faculty, 1 module, > 1 semester ##
 #############################################################
 
+#examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
+#  res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
+#  examiner_entries <- unlist(sapply(res_allSem, function(x){x[15]}))            #extract elements for "Prüfer" (entry 15 in each list element)
+#  grade_entries <- unlist(sapply(res_allSem, function(x){x[18]}))
+#  grade_entries <- gsub("-", NA,  grade_entries)
+#  grade_entries <- as.numeric(gsub("-", NA,  grade_entries))
+#  res_df <- na.omit(data.frame(examiner_entries, grade_entries))
+#  ex_comp <- sort(tapply(res_df$grade_entries, list(res_df$examiner_entries), mean))
+#  if (plot==FALSE) {
+#    return(ex_comp)
+#  }else{
+#    name_exam <- rownames(ex_comp)
+#    plot(a$name_exam, examiner_math_ba, main="Examiners by means")  #Was ist "a"? #examiner_math_ba nicht in Funktion definiert!
+#    return(ex_comp)
+#  }
+#}
+
 examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
   res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
   examiner_entries <- unlist(sapply(res_allSem, function(x){x[15]}))            #extract elements for "Prüfer" (entry 15 in each list element)
   grade_entries <- unlist(sapply(res_allSem, function(x){x[18]}))
-  grade_entries <- gsub("-", NA,  grade_entries)
   grade_entries <- as.numeric(gsub("-", NA,  grade_entries))
   res_df <- na.omit(data.frame(examiner_entries, grade_entries))
   ex_comp <- sort(tapply(res_df$grade_entries, list(res_df$examiner_entries), mean))
@@ -410,7 +426,9 @@ examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
     return(ex_comp)
   }else{
     name_exam <- rownames(ex_comp)
-    plot(a$name_exam, examiner_math_ba, main="Examiners by means")
+    barplot(names.arg=name_exam, ex_comp, main="Examiners by means")
+#    qplot(name_exam, ex_comp, main="Examiners by means")
+    return(ex_comp)
   }
 }
 
@@ -424,7 +442,9 @@ examiner_math_ba
 # select just the wintersemesters
 semester_winter <- semester_df$value[seq(1,length(semester_df$value),2)] 
 
-exam_intern_wi <- examiner_compare(semester_winter, 12, 113)
+exam_intern_wi <- examiner_compare(semester_winter, 12, 113, plot = TRUE)
+exam_intern_wi
+
 
 ###################################################################################
 ## 7. Compare examiners by number of students: 1 faculty, 1 module, > 1 semester ##
@@ -453,14 +473,49 @@ examiner_stud(semester_winter, 12, 113,mean=FALSE)
 ## 8. Compare exams (1. and 2. date): 1 faculty, > 1 module, > 1 semester ##
 ############################################################################
 
-date_compare <- function(sem_vec, faculty, module){
+#date_compare <- function(sem_vec, faculty, module){
+#  res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
+#  # save the infomrations in date.frame
+#  sem_info <- unlist(sapply(res_allSem, function(x){x[17]}))
+#  date_info <- unlist(sapply(res_allSem, function(x){x[12]}))
+#  mean_info  <- as.numeric(unlist(sapply(res_allSem, function(x){x[18]})))
+#  info_df <- data.frame(sem_info,date_info, mean_info) 
+#  info_df <- na.omit(info_df)
+#  info_df$date_info <- as.Date(info_df[,2], "%d.%m.%Y") 
+#  # extract the information for the second date
+#  second_mean_all <- data.frame(matrix(ncol = 1))
+#  for (i in 1:(length(info_df[,1])-1 )) {
+#    if (info_df[i,1] == info_df[i+1,1]) {
+#      second_mean_all[i,] <- info_df[i,3]  
+#    }
+#  }
+#  # compute mean for second date
+#  second_mean_all <- na.omit(second_mean_all)
+#  second_mean_all <- as.numeric(second_mean_all[,1])
+#  second_mean <- mean(second_mean_all)
+#  # extract the information for the first date
+#  first_mean_all <- data.frame(matrix(ncol = 1))
+#  for (i in 1:(length(info_df[,1])-1 )) {
+#    if (info_df[i,1] == info_df[i+1,1]) {
+#      first_mean_all[i,] <- info_df[i+1,3]  
+#    }
+#  }
+#  # compute mean for second date
+#  first_mean_all <- na.omit(first_mean_all)
+#  first_mean_all <- as.numeric(first_mean_all[,1])
+#  first_mean <- mean(first_mean_all)
+#  result <- data.frame(first_mean, second_mean)
+#  return(result)
+#}
+
+date_compare <- function(sem_vec, faculty, module, plot = FALSE){
   res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
   # save the infomrations in date.frame
   sem_info <- unlist(sapply(res_allSem, function(x){x[17]}))
   date_info <- unlist(sapply(res_allSem, function(x){x[12]}))
-  mean_info  <- as.numeric(unlist(sapply(res_allSem, function(x){x[18]})))
-  info_df <- data.frame(sem_info,date_info, mean_info) 
-  info_df <- na.omit(info_df)
+  mean_info  <- unlist(sapply(res_allSem, function(x){x[18]}))
+  mean_info <- as.numeric(gsub("-", NA,  mean_info))
+  info_df <- na.omit(data.frame(sem_info,date_info, mean_info)) 
   info_df$date_info <- as.Date(info_df[,2], "%d.%m.%Y") 
   # extract the information for the second date
   second_mean_all <- data.frame(matrix(ncol = 1))
@@ -480,16 +535,26 @@ date_compare <- function(sem_vec, faculty, module){
       first_mean_all[i,] <- info_df[i+1,3]  
     }
   }
-  # compute mean for second date
+  # compute mean for first date
   first_mean_all <- na.omit(first_mean_all)
   first_mean_all <- as.numeric(first_mean_all[,1])
   first_mean <- mean(first_mean_all)
   result <- data.frame(first_mean, second_mean)
-  return(result)
+  if (plot == FALSE){
+    return(result)
+  } else{
+    res_names <- colnames(result)
+    result_vec <- as.numeric(result[1,])
+    barplot(names.arg=res_names, result_vec, main = "First mean vs. second mean")
+    return(result)
+  }
 }
 
 ## Test with Module Mathematics from Wiwi-Faculty
-date_compare(semester_df$value, 12,104)
+date_compare(semester_df$value, 12, 104, plot = TRUE)
+
+date_compare(semester_df$value, 12, 217, plot = TRUE)
+date_compare(semester_df$value, 12, 217)
 
 
 
