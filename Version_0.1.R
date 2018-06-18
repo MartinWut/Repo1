@@ -251,6 +251,9 @@ for (i in 1:length(tmp)) {
 
 result_vec
 
+faculty_names <- colnames(result_vec)
+barplot(names.arg=faculty_names, tmp, main = "Compare faculty means")
+
 ### compare the same faculties over 3 Semesters (values: 64-66 -> WS 2016/2017; SS 2017; WS 2017/2018 )
 # time needed: round about 10 minutes
 semester_vec_test <- semester_df$value[c(5:7)]
