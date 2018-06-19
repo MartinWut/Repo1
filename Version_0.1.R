@@ -109,6 +109,7 @@ faculty_data <- function(x){# input either "all" or a certain faculty (e.g. "Wir
   }
 }
 
+faculty_data("Wirtschaftswissenschaftliche Fakultät")
 
 faculty_data("Medizinische Fakultät") ### noch beheben: Fehler bei bestimmten Fakultäten. Bsp. "Medizinische Fakultät"
 
