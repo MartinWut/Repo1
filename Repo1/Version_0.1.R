@@ -457,7 +457,7 @@ exam_intern_wi <- examiner_compare(semester_winter, 12, 113, plot = TRUE)
 exam_intern_wi
 
 ### Comparison for Econometrics I (217) in Winter terms
-
+ 
 #without plot
 econometricsI <- examiner_compare(semester_winter, 12,217)
 econometricsI
