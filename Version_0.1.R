@@ -191,7 +191,7 @@ module_mean <- function(sem_vec, faculty, module){
 
 
 semester_vec <- semester_df$value
-semester_vec2 <- semester_vec[4:length(semester_vec)]  #WS 2017/18 (4. Element) bis WS 2003/4
+semester_vec2 <- semester_vec[4:length(semester_vec)]  #WS 2017/18 (4. Element) bis WS 2003/04
 
 module_mean(semester_vec2, 12, 217)
 
@@ -251,16 +251,16 @@ faculty_mean(66, 12)
 ### Compare different faculty means for one semester by using faculty_mean - function
 
 
-result_vec <- data.frame(matrix(nrow =1, ncol = 3 ))
-colnames(result_vec) <- faculty_df[c(12:14),1]
+result_df <- data.frame(matrix(nrow =1, ncol = 3 ))
+colnames(result_df) <- faculty_df[c(12:14),1]
 tmp <- sapply(faculty_df[c(12:14),2], faculty_mean, semester=66)
 for (i in 1:length(tmp)) {
-  result_vec[,i] <- tmp[i]
+  result_df[,i] <- tmp[i]
 }
 
-result_vec
+result_df
 
-faculty_names <- colnames(result_vec)
+faculty_names <- c("Sozialwiss. Fakultät", "Theol. Fakultät", "Wirtschaftswiss. Fakultät")
 barplot(names.arg=faculty_names, tmp, main = "Compare faculty means")
 
 ### compare the same faculties over 3 Semesters (values: 64-66 -> WS 2016/2017; SS 2017; WS 2017/2018 )
@@ -429,7 +429,7 @@ faculty_semCompare <- function(faculty_vec, semester){
 
 examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
   res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
-  examiner_entries <- unlist(sapply(res_allSem, function(x){x[15]}))            #extract elements for "Prüfer" (entry 15 in each list element)
+  examiner_entries <- unlist(sapply(res_allSem, function(x){x[15]}))            
   grade_entries <- unlist(sapply(res_allSem, function(x){x[18]}))
   grade_entries <- as.numeric(gsub("-", NA,  grade_entries))
   res_df <- na.omit(data.frame(examiner_entries, grade_entries))
@@ -441,14 +441,17 @@ examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
     
     ggplot(df, aes( x=(df$Examiner_Name), y=df$Mean_Grades, fill=df$Examiner_Name) ) + 
       geom_bar(stat = "identity") + 
-      xlab("Examiner") + ylab("Meangrades") +
+      xlab("Examiner") + ylab("Mean grades") +
       coord_cartesian(ylim=c(min(df$Mean_Grades-0.5),max(df$Mean_Grades)+0.5)) +
       guides(fill=guide_legend(title=NULL)) +
       ggtitle("Comparison of Examiners")
   }
 }
  
+semester_vec <- semester_df$value
 
+examiner_compare(semester_vec, faculty = 12, module = 217)
+examiner_compare(semester_vec, faculty = 12, module = 217, plot = TRUE)
 
 
 ### e.g. Compare examiners
@@ -572,12 +575,25 @@ date_compare <- function(sem_vec, faculty, module, plot = FALSE){
   if (plot == FALSE){
     return(result)
   } else{
-    res_names <- colnames(result)
-    result_vec <- as.numeric(result[1,])
-    barplot(names.arg=res_names, result_vec, main = "First mean vs. second mean")
-    return(result)
+    df <- data.frame(Mean_Grades=as.numeric(result[1,]), date_names=c("First date", "Second date"))
+    ggplot(df, aes(x=df$date_names, y=df$Mean_Grades, fill=df$date_names)) +
+      geom_bar(stat = "identity") + 
+      xlab("Examination date") + ylab("Mean grades") +
+      coord_cartesian(ylim=c(min(df$Mean_Grades-0.5),max(df$Mean_Grades)+0.5)) +
+      guides(fill=guide_legend(title=NULL)) +
+      ggtitle("First vs. second examination date")
   }
 }
+
+df <- data.frame(Mean_Grades=ex_comp, Examiner_Name=rownames(ex_comp))
+
+ggplot(df, aes( x=(df$Examiner_Name), y=df$Mean_Grades, fill=df$Examiner_Name) ) + 
+  geom_bar(stat = "identity") + 
+  xlab("Examiner") + ylab("Meangrades") +
+  coord_cartesian(ylim=c(min(df$Mean_Grades-0.5),max(df$Mean_Grades)+0.5)) +
+  guides(fill=guide_legend(title=NULL)) +
+  ggtitle("Comparison of Examiners")
+return(ex_comp)
 
 ## Test with Module Mathematics from Wiwi-Faculty
 date_compare(semester_df$value, 12, 104, plot = TRUE)
