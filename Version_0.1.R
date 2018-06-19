@@ -223,7 +223,7 @@ module_mean(semester_vec2, 12, 217)
 faculty_mean <- function(semester, faculty, module_vec = as.numeric(list_modules(faculty)$value)){
   res_allMod <- lapply(module_vec, module_data, semester = semester, faculty = faculty)
   grade_entries <- unlist(sapply(res_allMod, function(x){x[18]}))
-  grade_entries <- as.numeric(gsub("-", NA,  grade_entries))   #throw out all list elements without a grade entry ("-")
+  grade_entries <- as.numeric(gsub("-", NA,  grade_entries))  
   mean_val <- mean(grade_entries, na.rm = T)
   return(mean_val)
 }
@@ -262,6 +262,18 @@ result_df
 
 faculty_names <- c("Sozialwiss. Fakultät", "Theol. Fakultät", "Wirtschaftswiss. Fakultät")
 barplot(names.arg=faculty_names, tmp, main = "Compare faculty means")
+
+
+
+df <- data.frame(Mean_Grades=tmp, Faculty_Name=c("Sozialwiss. Fakultät", "Theol. Fakultät", 
+                                                 "Wirtschaftswiss. Fakultät"))
+
+ggplot(df, aes( x=(df$Faculty_Name), y=df$Mean_Grades, fill=df$Faculty_Name) ) + 
+  geom_bar(stat = "identity") + 
+  xlab("Faculty") + ylab("Mean grades") +
+  coord_cartesian(ylim=c(min(df$Mean_Grades-0.5),max(df$Mean_Grades)+0.5)) +
+  guides(fill=guide_legend(title=NULL)) +
+  ggtitle("Comparison of faculty means")
 
 ### compare the same faculties over 3 Semesters (values: 64-66 -> WS 2016/2017; SS 2017; WS 2017/2018 )
 # time needed: round about 10 minutes
@@ -585,15 +597,11 @@ date_compare <- function(sem_vec, faculty, module, plot = FALSE){
   }
 }
 
-df <- data.frame(Mean_Grades=ex_comp, Examiner_Name=rownames(ex_comp))
+date_compare(semester_vec, faculty = 12, module = 217)
+date_compare(semester_vec, faculty = 12, module = 217, plot = TRUE)
 
-ggplot(df, aes( x=(df$Examiner_Name), y=df$Mean_Grades, fill=df$Examiner_Name) ) + 
-  geom_bar(stat = "identity") + 
-  xlab("Examiner") + ylab("Meangrades") +
-  coord_cartesian(ylim=c(min(df$Mean_Grades-0.5),max(df$Mean_Grades)+0.5)) +
-  guides(fill=guide_legend(title=NULL)) +
-  ggtitle("Comparison of Examiners")
-return(ex_comp)
+
+
 
 ## Test with Module Mathematics from Wiwi-Faculty
 date_compare(semester_df$value, 12, 104, plot = TRUE)
