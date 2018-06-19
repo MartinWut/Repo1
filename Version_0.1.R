@@ -1,5 +1,5 @@
 ### Version 0.1 R-Package Flexstat-Crawler
-
+ 
 #library(jsonlite)
 library(httr)
 #install.packages("rjson")
@@ -137,7 +137,7 @@ list_modules <- function(faculty){
 
 list_modules(12)
 
-View(list_modules(12))
+
 
 
 ########################################
