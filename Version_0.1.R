@@ -210,13 +210,21 @@ module_mean(semester_vec2, 12, 217)
 #  return(mean_val)
 #}
 
+#faculty_mean <- function(semester, faculty, module_vec = as.numeric(list_modules(faculty)$value)){
+#  res_allMod <- lapply(module_vec, module_data, semester = semester, faculty = faculty)
+#  grade_entries <- sapply(res_allMod, function(x){x[18]})
+#  grades <- unlist(sapply(grade_entries, function(x) x[!is.null(x)]))   #throw out all NULL list elements
+#  grades <- grades[grades != "-" & grades != ""]                   #throw out all list elements without a grade entry ("-", "")
+#  mean_vec <- as.numeric(grades)
+#  mean_val <- mean(mean_vec, na.rm = T)
+#  return(mean_val)
+#}
+
 faculty_mean <- function(semester, faculty, module_vec = as.numeric(list_modules(faculty)$value)){
   res_allMod <- lapply(module_vec, module_data, semester = semester, faculty = faculty)
-  grade_entries <- sapply(res_allMod, function(x){x[18]})
-  grades <- unlist(sapply(grade_entries, function(x) x[!is.null(x)]))   #throw out all NULL list elements
-  grades <- grades[grades != "-" & grades != ""]                   #throw out all list elements without a grade entry ("-", "")
-  mean_vec <- as.numeric(grades)
-  mean_val <- mean(mean_vec, na.rm = T)
+  grade_entries <- unlist(sapply(res_allMod, function(x){x[18]}))
+  grade_entries <- as.numeric(gsub("-", NA,  grade_entries))   #throw out all list elements without a grade entry ("-")
+  mean_val <- mean(grade_entries, na.rm = T)
   return(mean_val)
 }
 
