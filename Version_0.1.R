@@ -429,12 +429,18 @@ examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
   if (plot==FALSE) {
     return(ex_comp)
   }else{
-    name_exam <- rownames(ex_comp)
-    barplot(names.arg=name_exam, ex_comp, main="Examiners by means")
-#    qplot(name_exam, ex_comp, main="Examiners by means")
-    return(ex_comp)
+    df <- data.frame(Mean_Grades=ex_comp, Examiner_Name=rownames(ex_comp))
+    
+    ggplot(df, aes( x=(df$Examiner_Name), y=df$Mean_Grades, fill=df$Examiner_Name) ) + 
+      geom_bar(stat = "identity") + 
+      xlab("Examiner") + ylab("Meangrades") +
+      coord_cartesian(ylim=c(min(df$Mean_Grades-0.5),max(df$Mean_Grades)+0.5)) +
+      guides(fill=guide_legend(title=NULL)) +
+      ggtitle("Comparison of Examiners")
   }
 }
+ 
+
 
 
 ### e.g. Compare examiners
@@ -447,7 +453,18 @@ examiner_math_ba
 semester_winter <- semester_df$value[seq(1,length(semester_df$value),2)] 
 
 exam_intern_wi <- examiner_compare(semester_winter, 12, 113, plot = TRUE)
+
 exam_intern_wi
+
+### Comparison for Econometrics I (217) in Winter terms
+
+#without plot
+econometricsI <- examiner_compare(semester_winter, 12,217)
+econometricsI
+
+# with plot
+econometricsI <- examiner_compare(semester_winter, 12,217, plot = TRUE)
+econometricsI
 
 
 ###################################################################################
