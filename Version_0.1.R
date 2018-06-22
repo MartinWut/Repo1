@@ -146,9 +146,9 @@ list_modules(12)
 
 module_data <- function(semester, faculty, module){
   results_file <- readChar("json/request.json", file.info("json/request.json")$size)
-  for (i in semester) {
-    for (j in faculty) {
-      for (k in module) {
+  #for (i in semester) {  ## diese drei loops sind überflüssig
+  #  for (j in faculty) {
+  #    for (k in module) {
         semester_list <- paste('"lastValue":"', semester, '"')
         results_list <- sub('"lastValue":"60"',semester_list, results_file)
         
@@ -173,7 +173,7 @@ module_data <- function(semester, faculty, module){
 ÖkoI <- module_data(64, 12, 217)
 ÖkoI
 
-
+module_data(60, 12, module = c(104,217))
 
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
@@ -740,4 +740,5 @@ str(res$X18)
 tmp <- subset(as.numeric(res$X18), as.numeric(res$X18) != "NA")
 mean(tmp)
 
-
+a <- c(4,3,7,5)
+var(a)
