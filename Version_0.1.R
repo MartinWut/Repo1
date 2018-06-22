@@ -157,9 +157,6 @@ module_data <- function(semester, faculty, module){
         
         module_list <- paste('"lastValue":"', module, '"')
         results_list <- sub('"lastValue":"112"',module_list, results_list)
-      }
-    }
-  }
   bodyList <- list(data = results_list)
   records <- data.frame(matrix(nrow = 0, ncol = 21))
   flex_url <- "https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/queryexecution/results"
@@ -450,7 +447,11 @@ examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
     return(ex_comp)
   }else{
     df <- data.frame(Mean_Grades=ex_comp, Examiner_Name=rownames(ex_comp))
+    ### order the factor levels to get a sorted plot
     
+    df$Examiner_Name <-  factor(df$Examiner_Name, levels = c(names(ex_comp)))
+    
+    ### plot the result
     ggplot(df, aes( x=(df$Examiner_Name), y=df$Mean_Grades, fill=df$Examiner_Name) ) + 
       geom_bar(stat = "identity") + 
       xlab("Examiner") + ylab("Mean grades") +
@@ -459,6 +460,7 @@ examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
       ggtitle("Comparison of Examiners")
   }
 }
+
  
 semester_vec <- semester_df$value
 
