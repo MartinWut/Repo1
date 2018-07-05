@@ -9,6 +9,9 @@ library(dplyr)
 #install.packages("zoo")
 library("zoo")
 library("ggplot2")
+#install.packages("stringr")
+library(stringr)
+
 
 #############################################################
 ## 1. Functions for accessing semsters, faculties, modules ##
@@ -21,6 +24,7 @@ semester_get <- GET("https://pruefungsverwaltung.uni-goettingen.de/statistikport
 semester_df <- jsonlite::fromJSON(txt = content(semester_get, as="text"))
 semester_df$value <- as.numeric(semester_df$value)
 head(semester_df)
+
 
 ## function to list all semesters ##
 
@@ -73,6 +77,12 @@ faculty_df <- jsonlite::fromJSON(txt = content(faculty_get, as="text"))
 faculty_df$value <- as.numeric(faculty_df$value)
 head(faculty_df)
 
+#remove white space at the end of some faculty names
+faculty_df$label <- str_trim(faculty_df$label, "right")
+head(faculty_df)
+
+faculty_df$label[faculty_df$value == 7]
+
 ## function to list all faculties ##
 
 list_faculties <- function(){
@@ -97,6 +107,7 @@ give_faculty("Wirtschaftswissenschaftliche Fakultät")
 faculty_data <- function(x){# input either "all" or a certain faculty (e.g. "Wirtschaftswissenschaftliche Fakultät ")
   faculty_get <- GET("https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1525710916300&type=FAK&path=&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25")
   faculty_df <- jsonlite::fromJSON(txt = content(faculty_get, as="text"))
+  faculty_df$label <- str_trim(faculty_df$label, "right")   #remove whitespace at the end of some faculty names
   faculty_df$value <- as.numeric(faculty_df$value)
   if (x == "all"){
     return(faculty_df)
@@ -109,9 +120,14 @@ faculty_data <- function(x){# input either "all" or a certain faculty (e.g. "Wir
   }
 }
 
+faculty_data("all")
+
 faculty_data("Wirtschaftswissenschaftliche Fakultät")
 
-faculty_data("Medizinische Fakultät") ### noch beheben: Fehler bei bestimmten Fakultäten. Bsp. "Medizinische Fakultät"
+#faculty_data("Medizinische Fakultät") ### noch beheben: Fehler bei bestimmten Fakultäten. Bsp. "Medizinische Fakultät"
+
+#problem solved with str_trim function!!!
+faculty_data("Medizinische Fakultät") #works!
 
 
 
