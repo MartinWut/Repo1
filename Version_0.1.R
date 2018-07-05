@@ -678,6 +678,13 @@ date_compare_sem <- function(sem_vec, faculty, module, plot = FALSE){
   }
 }
 
+date_compare_sem(semester_vec, faculty = 12, module = 217)
+date_compare_sem(semester_vec, faculty = 12, module = 217, plot = TRUE)
+
+## Test with Module Mathematics from Wiwi-Faculty
+date_compare_sem(semester_df$value, 12, 104, plot = TRUE)
+
+
 
 
 
