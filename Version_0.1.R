@@ -155,7 +155,6 @@ list_modules(12)
 
 
 
-
 ########################################
 ## 2. 1 faculty, 1 module, 1 semester ##
 ########################################
@@ -618,9 +617,6 @@ date_compare <- function(sem_vec, faculty, module, plot = FALSE){
 date_compare(semester_vec, faculty = 12, module = 217)
 date_compare(semester_vec, faculty = 12, module = 217, plot = TRUE)
 
-
-
-
 ## Test with Module Mathematics from Wiwi-Faculty
 date_compare(semester_df$value, 12, 104, plot = TRUE)
 
@@ -628,8 +624,59 @@ date_compare(semester_df$value, 12, 217, plot = TRUE)
 date_compare(semester_df$value, 12, 217)
 
 
+### compare first vs. second exam date per semester ##
 
-
+date_compare_sem <- function(sem_vec, faculty, module, plot = FALSE){
+  res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
+  # save the informations in date.frame
+  sem_info <- unlist(sapply(res_allSem, function(x){x[17]}))
+  date_info <- unlist(sapply(res_allSem, function(x){x[12]}))
+  mean_info  <- unlist(sapply(res_allSem, function(x){x[18]}))
+  mean_info <- as.numeric(gsub("-", NA,  mean_info))
+  info_df <- na.omit(data.frame(sem_info,date_info, mean_info))
+  info_df$sem_info <- as.character(info_df$sem_info)
+  info_df$date_info <- as.Date(info_df[,2], "%d.%m.%Y") 
+  info_df$Date <- rep(NA, nrow(info_df))  #grouping varialble for plot
+  # extract the information for the second date
+  grade_table <- data.frame(matrix(ncol = 3))
+  for (i in 1:(length(info_df[,1])-1 )) {
+    if (info_df[i,1] == info_df[i+1,1]) {
+      grade_table[i,1] <- info_df[i,1]
+      grade_table[i,2] <- info_df[i,3]
+      info_df[i,4] <- "Second date"  #grouping varialble for plot
+    }
+  }
+  # extract the information for the first date
+  for (i in 1:(length(info_df[,1])-1 )) {
+    if (info_df[i,1] == info_df[i+1,1]) {
+      grade_table[i,3] <- info_df[i+1,3]
+      info_df[i+1,4] <- "First date"    #grouping varialble for plot
+    }
+  }
+  info_df$Date[is.na(info_df$Date)] <- "First date" #set all semesters without a second exam date to "first date"
+  grade_table <- na.omit(grade_table)
+  info_df <- na.omit(info_df)
+  grade_table$second_date_compare <- rep(NA, nrow(grade_table))
+  for(i in 1:nrow(grade_table)){
+    if (grade_table[i,2] > grade_table[i,3]){
+      grade_table[i,4] <- "+"
+    }else if (grade_table[i,2] == grade_table[i,3]){
+      grade_table[i,4] <- "="
+    }else{
+      grade_table[i,4] <- "-"
+    }
+  }
+  grade_table <- grade_table[c(nrow(grade_table):1),]
+  if (plot == FALSE){
+    return(grade_table)
+  } else{
+    ggplot(info_df, aes(x=sem_info, y=mean_info, group=Date)) +
+      geom_line(aes(color=Date)) +
+      geom_point(aes(color=Date)) +
+      xlab("Semester")  + ylab("Mean grades") +
+      ggtitle("First vs. second examination date per semester")
+  }
+}
 
 
 
