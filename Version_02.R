@@ -18,7 +18,7 @@ library(tidyr)
 
 
 #############################################################
-## 1. Functions for accessing semsters, faculties, modules ##
+## 1. Functions for accessing semesters, faculties, modules ##
 #############################################################
 
 #### get semesters ####
@@ -190,6 +190,76 @@ module_data <- function(semester, faculty, module){
 ÖkoI
 
 module_data(60, 12, module = c(104,217))
+
+
+
+#################################################################
+## 2.1 Downloading the data                                    ##
+#################################################################
+
+# Laden der Fakultätsdaten durch Verwendung der Funktionen:
+# single-request, semester_data, faculty_data
+
+semester_all <- semester_data("all")
+faculty_all <- faculty_data("all")
+
+
+single_request <- function(Semester, Fakultät, Modul){
+  resultsURL <- "https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/queryexecution/results"
+  requestJSON <- readChar("json/request.json", file.info("json/request.json")$size)
+  #modulesDataFrame <- all_modules[[Fakultät]] #### hier die gewünschte Fakultät angegeben. Bsp.: all_modules$`Theologische Fakultät`
+  
+  records <- data.frame(matrix(nrow = 0, ncol = 21))
+  
+  facultyString <- paste0('"lastValue":"',subset(faculty_all[,2], faculty_all[,1] == Fakultät | faculty_all[,2] == Fakultät) , '"') ### Hier den Wert der Fakultät angeben
+  thisRequestJSON <- sub('"lastValue":"12"', facultyString, requestJSON)
+  
+  moduleString <- paste0('"lastValue":"', Modul, '"') ### Hier den Wert des Modules angeben
+  thisRequestJSON <- sub('"lastValue":"112"', moduleString, requestJSON)
+  
+  semesterString <- paste0('"lastValue":"', subset(semester_all[,2], semester_all[,1] == Semester), '"') ### Hier den Wert des Semesters angeben 
+  thisRequestJSON <- sub('"lastValue":"60"', semesterString, thisRequestJSON)
+  
+  bodyList <- list(data = thisRequestJSON)
+  request <- POST(resultsURL, body = bodyList, encode = "form")
+  stop_for_status(request)
+  
+  responseJSON <- content(request, encoding = "UTF-8", type = "text")
+  responseDataFrame <- fromJSON(responseJSON)$data$records
+  results <<- data.frame(matrix(nrow = max(length(Semester),length(Fakultät), length(Modul)), ncol = 21))
+  results <- responseDataFrame
+  #results <- results[,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
+  return(results)
+}
+
+faculty_down <- function(facultyNr){
+  
+  # download the necessary data
+  semester_all <- semester_data("all")
+  module_all <- as.numeric(list_modules(facultyNr)$value)
+  
+  # define the output
+  res <- data.frame(matrix( ncol = 21))
+  fac_mod_list <- list()
+  
+  # download the data for one module and (looped)
+  for (moduleNr in 1:length(module_all)) {
+    for (i in 1:length(semester_all[,1])) {
+      if (class(single_request(semester_all[i,1], facultyNr, module_all[moduleNr])) == "data.frame") {
+        res[i,] <- single_request(semester_all[i,1], facultyNr, module_all[moduleNr])
+      }
+      res <- na.omit(res) # Falls NA's entfernt werden sollen 
+      fac_mod_list[[moduleNr]] <- res
+    }
+  }
+  return(fac_mod_list)
+}
+
+# Testbeispiel:  Fakultät für Mathematik und Informatik (Nr:5) (Start:23:49 Ende:)
+
+Wiwi_data <- faculty_down
+MathInf_data <- faculty_down(5)
+
 
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
