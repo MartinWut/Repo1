@@ -198,7 +198,7 @@ module_data(60, 12, module = c(104,217))
 #################################################################
 
 # Laden der Fakultätsdaten durch Verwendung der Funktionen:
-# single-request, semester_data, faculty_data
+# single-request, semester_data, faculty_data, list_modules
 
 semester_all <- semester_data("all")
 faculty_all <- faculty_data("all")
@@ -207,7 +207,6 @@ faculty_all <- faculty_data("all")
 single_request <- function(Semester, Fakultät, Modul){
   resultsURL <- "https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/queryexecution/results"
   requestJSON <- readChar("json/request.json", file.info("json/request.json")$size)
-  #modulesDataFrame <- all_modules[[Fakultät]] #### hier die gewünschte Fakultät angegeben. Bsp.: all_modules$`Theologische Fakultät`
   
   records <- data.frame(matrix(nrow = 0, ncol = 21))
   
@@ -239,27 +238,32 @@ faculty_down <- function(facultyNr){
   module_all <- as.numeric(list_modules(facultyNr)$value)
   
   # define the output
-  res <- data.frame(matrix( ncol = 21))
+  
   fac_mod_list <- list()
   
   # download the data for one module and (looped)
   for (moduleNr in 1:length(module_all)) {
+    res <- data.frame(matrix( ncol = 21))
     for (i in 1:length(semester_all[,1])) {
       if (class(single_request(semester_all[i,1], facultyNr, module_all[moduleNr])) == "data.frame") {
         res[i,] <- single_request(semester_all[i,1], facultyNr, module_all[moduleNr])
       }
-      res <- na.omit(res) # Falls NA's entfernt werden sollen 
-      fac_mod_list[[moduleNr]] <- res
     }
+    res <- na.omit(res) # Falls NA's entfernt werden sollen 
+    fac_mod_list[[moduleNr]] <- res
   }
   return(fac_mod_list)
 }
 
 # Testbeispiel:  Medizinische Fakultät (Nr:3) (Start: 08:37 Ende:08:46)
 
-
 Med_data <- faculty_down(3)
 View(Med_data)
+
+# Testbeispiel:  Wiwi Fakultät (Nr:3) (Start: 09:00 Ende: 09:42)
+
+Wiwi_data <- faculty_down(12)
+View(Wiwi_data)
 
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
