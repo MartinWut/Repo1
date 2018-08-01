@@ -255,11 +255,11 @@ faculty_down <- function(facultyNr){
   return(fac_mod_list)
 }
 
-# Testbeispiel:  Fakultät für Mathematik und Informatik (Nr:5) (Start:23:49 Ende:)
+# Testbeispiel:  Medizinische Fakultät (Nr:3) (Start: 08:37 Ende:08:46)
 
-Wiwi_data <- faculty_down
-MathInf_data <- faculty_down(5)
 
+Med_data <- faculty_down(3)
+View(Med_data)
 
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
