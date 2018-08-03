@@ -227,7 +227,6 @@ single_request <- function(Semester, Fakultät, Modul){
   responseDataFrame <- fromJSON(responseJSON)$data$records
   results <<- data.frame(matrix(nrow = max(length(Semester),length(Fakultät), length(Modul)), ncol = 21))
   results <- responseDataFrame
-  #results <- results[,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
   return(results)
 }
 
@@ -248,22 +247,38 @@ faculty_down <- function(facultyNr){
       if (class(single_request(semester_all[i,1], facultyNr, module_all[moduleNr])) == "data.frame") {
         res[i,] <- single_request(semester_all[i,1], facultyNr, module_all[moduleNr])
       }
-    }
+    }  
+    Spaltennamen <- c("2_3" ,"Studienmodul" ,"Nicht bestanden", "Ohne Note", "Notenschnitt (nur Bestanden)", "1_0" ,"1_7", "2_7", "3_7" ,"5_0" ,"4_0", "Klausurtermin", "3_0", "Bestanden", "Prüfer" ,"2_0" ,"Semester","Notenschnitt" ,"3_3", "Anzahl" ,"1_3" )
+    colnames(res) <- Spaltennamen
+    res <- res[,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
     res <- na.omit(res) # Falls NA's entfernt werden sollen 
     fac_mod_list[[moduleNr]] <- res
   }
   return(fac_mod_list)
 }
 
+# Download und Speichern der Fakultätsdaten als CSV-Dstei
 # Testbeispiel:  Medizinische Fakultät (Nr:3) (Start: 08:37 Ende:08:46)
 
 Med_data <- faculty_down(3)
-View(Med_data)
+# View(Med_data)
+lapply(Med_data, function(x) write.table( x, 'Med_data.csv'  , append= T, sep=',' ))
 
 # Testbeispiel:  Wiwi Fakultät (Nr:3) (Start: 09:00 Ende: 09:42)
 
 Wiwi_data <- faculty_down(12)
-View(Wiwi_data)
+# View(Wiwi_data)
+lapply(Wiwi_data, function(x) write.table( x, 'WiWi_data.csv'  , append= T, sep=',' ))
+
+setwd("/Users/martinwutke/Desktop/Git/faculty_data")
+
+
+
+
+
+
+setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler")
+colnames(Wiwi_data[[1]]) <- colnames(a)
 
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
