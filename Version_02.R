@@ -257,28 +257,27 @@ faculty_down <- function(facultyNr){
   return(fac_mod_list)
 }
 
-# Download und Speichern der Fakultätsdaten als CSV-Dstei
-# Testbeispiel:  Medizinische Fakultät (Nr:3) (Start: 08:37 Ende:08:46)
+# Download und Speichern der Fakultätsdaten als RDS-Datei (einlesen über readRDS-command)
+# Medizinische Fakultät (Nr:3) (Start: 08:37 Ende:08:46)
 
 Med_data <- faculty_down(3)
 # View(Med_data)
-lapply(Med_data, function(x) write.table( x, 'Med_data.csv'  , append= T, sep=',' ))
+# lapply(Med_data, function(x) write.table( x, 'Med_data.csv'  , append= T, sep=',' ))
 
-# Testbeispiel:  Wiwi Fakultät (Nr:3) (Start: 09:00 Ende: 09:42)
+saveRDS(Med_data, "Med_data")
+
+# Wiwi Fakultät (Nr:3) (Start: 09:00 Ende: 09:42)
 
 Wiwi_data <- faculty_down(12)
-# View(Wiwi_data)
-lapply(Wiwi_data, function(x) write.table( x, 'WiWi_data.csv'  , append= T, sep=',' ))
+saveRDS(Wiwi_data, "Wiwi_data")
 
-setwd("/Users/martinwutke/Desktop/Git/faculty_data")
+# Juristische Falkultät
+Jur_data <- faculty_down(2)
+saveRDS(Jur_data, "Jur_data")
 
-
-
-
-
-
-setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler")
-colnames(Wiwi_data[[1]]) <- colnames(a)
+# Agrar-Fakultät
+Agr_data <- faculty_down(11)
+saveRDS(Agr_data, "Agrar_data")
 
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
