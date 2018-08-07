@@ -257,27 +257,66 @@ faculty_down <- function(facultyNr){
   return(fac_mod_list)
 }
 
-# Download und Speichern der Fakultätsdaten als RDS-Datei (einlesen über readRDS-command)
+## Download und Speichern der Fakultätsdaten als RDS-Datei (einlesen über readRDS-command)
+
 # Medizinische Fakultät (Nr:3) (Start: 08:37 Ende:08:46)
-
 Med_data <- faculty_down(3)
-# View(Med_data)
 # lapply(Med_data, function(x) write.table( x, 'Med_data.csv'  , append= T, sep=',' ))
-
 saveRDS(Med_data, "Med_data")
 
-# Wiwi Fakultät (Nr:3) (Start: 09:00 Ende: 09:42)
+# Wiwi Fakultät (Nr:12) (Start: 09:00 Ende: 09:42)
 
 Wiwi_data <- faculty_down(12)
 saveRDS(Wiwi_data, "Wiwi_data")
 
-# Juristische Falkultät
+# Juristische Falkultät (Nr: 2)
 Jur_data <- faculty_down(2)
 saveRDS(Jur_data, "Jur_data")
 
-# Agrar-Fakultät
+# Agrar-Fakultät (Nr:11)
 Agr_data <- faculty_down(11)
 saveRDS(Agr_data, "Agrar_data")
+
+# Geo-Fakulät (Nr:8)
+Geo_data <- faculty_down(8)
+saveRDS(Geo_data, "Geo_data")
+
+# Bio_Psy-Fakultät (Nr:9)
+bio_psy_data <- faculty_down(9)
+saveRDS(bio_psy_data, "bio_psy_data")
+
+# Chemi-Fakultät (Nr:7)
+che_data <- faculty_down(7)
+saveRDS(che_data, "che_data")
+
+# Forst-fakultät (Nr:10)
+forst_data <- faculty_down(10)
+saveRDS(forst_data,"forst_data")
+
+# Mathe-Fakultät (Nr:5)
+math_data <- faculty_down(5)
+saveRDS(math_data,"math_data")
+
+# Physik-Fakultät (Nr:6)
+phys_data <- faculty_down(6)
+saveRDS(phys_data,"phys_data")
+
+# Gemeinsame und Zentrale Einrichtungen (Nr:17)
+zess_data <- faculty_down(17)
+saveRDS(zess_data,"zess_data")
+
+# Philosophische Fakultät (Nr:4)
+phil_data <- faculty_down(4)
+saveRDS(phil_data,"phil_data")
+
+# Sozialwissenschaftliche Fakultät (Nr:13)
+sowi_data <- faculty_down(13)
+saveRDS(sowi_data,"sowi_data")
+
+# Theologische Fakultät (Nr:1)
+theo_data <- faculty_down(1)
+saveRDS(theo_data,"theo_data")
+
 
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
