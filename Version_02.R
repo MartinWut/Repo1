@@ -233,7 +233,7 @@ single_request <- function(Semester, Fakultät, Modul){
 faculty_down <- function(facultyNr){
   
   # download the necessary data
-  semester_all <- semester_data("all")
+  
   module_all <- as.numeric(list_modules(facultyNr)$value)
   
   # define the output
@@ -243,10 +243,10 @@ faculty_down <- function(facultyNr){
   # download the data for one module and (looped)
   for (moduleNr in 1:length(module_all)) {
     res <- data.frame(matrix( ncol = 21))
-    for (i in 1:length(semester_all[,1])) {
-      if (class(single_request(semester_all[i,1], facultyNr, module_all[moduleNr])) == "data.frame") {
-        res[i,] <- single_request(semester_all[i,1], facultyNr, module_all[moduleNr])
-      }
+   
+      if (class(single_request("all", facultyNr, module_all[moduleNr])) == "data.frame") {
+        res <- single_request("all", facultyNr, module_all[moduleNr])
+  
     }  
     Spaltennamen <- c("2_3" ,"Studienmodul" ,"Nicht bestanden", "Ohne Note", "Notenschnitt (nur Bestanden)", "1_0" ,"1_7", "2_7", "3_7" ,"5_0" ,"4_0", "Klausurtermin", "3_0", "Bestanden", "Prüfer" ,"2_0" ,"Semester","Notenschnitt" ,"3_3", "Anzahl" ,"1_3" )
     colnames(res) <- Spaltennamen
@@ -658,7 +658,7 @@ examiner_stud <- function(sem_vec, faculty, module,mean=TRUE, plot=FALSE){
   }
 }
 
-examiner_stud(semester_winter, 12, 113,mean=FALSE)
+examiner_stud(semester_winter, 12, 113,mean=TRUE, plot = TRUE)
 
 
 ############################################################################
