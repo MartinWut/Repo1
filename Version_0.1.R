@@ -14,7 +14,7 @@ library(stringr)
 
 
 #############################################################
-## 1. Functions for accessing semsters, faculties, modules ##
+## 1. Functions for accessing semesters, faculties, modules ##
 #############################################################
 
 #### get semesters ####
