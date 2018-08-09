@@ -673,6 +673,8 @@ date_compare <- function(sem_vec, faculty, module, plot = FALSE){
   mean_info  <- unlist(sapply(res_allSem, function(x){x[18]}))
   date_names <- names(mean_info)  
   #for group variable with groups "Notenschnitt1", "Notenschnitt2", etc.
+  #problem: for one entry the date name is "Notenschnitt
+  date_names <- gsub("Notenschnitt1", "Notenschnitt", x = date_names)
   mean_info <- as.numeric(gsub("-", NA,  mean_info))
   info_df <- na.omit(data.frame(sem_info,date_info, mean_info, date_names)) 
   info_df$date_info <- as.Date(info_df[,2], "%d.%m.%Y") 
@@ -696,6 +698,15 @@ date_compare(semester_vec, faculty = 12, module = 217, plot = TRUE)
 
 ## Test with Module Mathematics from Wiwi-Faculty
 date_compare(semester_df$value, 12, 104, plot = TRUE)
+date_compare(semester_df$value, 12, 104)
+
+module_data(63, 12, 104) #3 Klausurtermine (ein Termin doppelt eingetragen)
+module_data(61, 12, 104) #3 Klausurtermine
+module_data(49, 12, 104) #3 Einträge für Klausurtermine
+module_data(48, 12, 104) #3 Einträge für Klausurtermine
+module_data(47, 12, 104) #3 Termine (2 doppelt)/ 4 Einträge
+module_data(45, 12, 104) #2 Termine/ 3 Einträge
+module_data(43, 12, 104) #3 Einträge für Klausurtermine
 
 date_compare(semester_df$value, 12, 217, plot = TRUE)
 date_compare(semester_df$value, 12, 217)
