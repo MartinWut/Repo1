@@ -549,7 +549,12 @@ faculty_meanSem(semester_vec2, 12)
 
 
 ####### Alternative: mit bereits heruntergeladenen Daten
-faculty_mean2 <- function(faculty_nr, download=TRUE, data=NA){ # download= TRUE bedeutet, dass die vorab geladen wurden. Die Liste mit den Faculty-Daten muss dann unter data angegeben werden
+## mit Einführung einer neuen S3-Klasse: "fac_mean"
+
+faculty_mean2 <- function(faculty_nr, download=TRUE, data=NA){ # download= TRUE bedeutet, dass die Daten vorab geladen wurden. Die Liste mit den Faculty-Daten muss dann unter data angegeben werden
+  
+  # load the needed data for result-format
+  faculty_vec <- faculty_data("all")
   
   # create the data depending on the parameters 
   if (download==TRUE & is.na(data)) {
@@ -563,8 +568,6 @@ faculty_mean2 <- function(faculty_nr, download=TRUE, data=NA){ # download= TRUE 
   }
   
   # exclude the observations without a mean grade for an exam (this is seen by "-" or "")
-  
-  
   tmp2 <- tmp1
   for (j in 1:length(tmp1)) {
     tmp2[[j]] <- subset(tmp2[[j]], tmp2[[j]][8] != "-" & tmp2[[j]][,8] != "" )
@@ -579,11 +582,23 @@ faculty_mean2 <- function(faculty_nr, download=TRUE, data=NA){ # download= TRUE 
   for (j in 1:length(tmp2)) {
     tmp3[j] <- mean(as.numeric(tmp2[[j]][,8]))
   }
-  result <- mean(tmp3)
+  mean_tmp <- mean(tmp3)
+  faculty_tmp <- faculty_vec[faculty_nr,1]
+  result <- list(Mean = mean_tmp,Faculty = faculty_tmp )
   
-  # retur the result
-  return(result)
+  # define a class object (S3)
+  #class(result) <- append(class(result), "faculty_mean")
+  attr(result, "class") <- "fac_mean"
+  
+  # return the result
+  result
   }
+
+# Definiere die Darstellung der faculty_mean2-Funktion
+print.fac_mean <- function(obj){
+  cat("Mean = ", obj$Mean,"\n")
+  cat("Faculty = ", obj$Faculty, "\n")
+}
 
 
 
@@ -596,6 +611,8 @@ test2 <- faculty_mean2(12)
 
 # test with already downloaded data -> mean-value expected
 test3 <- faculty_mean2(12, data = Wiwi_data)
+test3
+test3$Mean
 
 ##########################################
 ## 5. Compare faculty means: 1 semester ##
