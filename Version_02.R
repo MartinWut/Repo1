@@ -538,6 +538,39 @@ faculty_meanSem <- function(semester_vec, faculty){
 faculty_meanSem(semester_vec2, 12)
 
 
+
+
+
+####### Alternative: mit bereits heruntergeladenen Daten
+faculty_mean2 <- function(faculty_nr, download=TRUE, data=NA){ # download= TRUE bedeutet, dass die vorab geladen wurden. Die Liste mit den Faculty-Daten muss dann unter data angegeben werden
+  if (download==TRUE & is.na(data)) {
+    print("Wrong data-type. A list with the faculty data is required. Either set download to FALSE or provide the faculty data if download is set to TRUE")
+  }else{
+    if (download==FALSE) {
+      tmp1 <- faculty_down(faculty_nr)
+    }else{
+       tmp1 <- data
+    }
+  }
+  tmp2 <- NA
+  for (j in 1:length(tmp1)) {
+    tmp2[j] <- mean(na.omit(as.numeric(Wiwi_data[[j]][,8])))
+  }
+  tmp2 <- na.omit(tmp2)
+  tmp3 <- mean(tmp2)
+  return(tmp3)
+}
+
+# test with separat download -> mean-value expected
+test <- faculty_mean2(12, download = FALSE)
+
+# test with unsufficient inputs -> error message expected
+test2 <- faculty_mean2(12)
+
+# test with already downloaded data -> mean-value expected
+
+test3 <- faculty_mean2(12, data = Wiwi_data)
+
 ##########################################
 ## 5. Compare faculty means: 1 semester ##
 ##########################################
