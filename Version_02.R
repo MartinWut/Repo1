@@ -555,6 +555,7 @@ faculty_mean2 <- function(faculty_nr, download=TRUE, data=NA){ # download= TRUE 
   
   # load the needed data for result-format
   faculty_vec <- faculty_data("all")
+  faculty_vec <- faculty_vec[order(faculty_vec$value),]
   
   # create the data depending on the parameters 
   if (download==TRUE & is.na(data)) {
@@ -613,6 +614,10 @@ test2 <- faculty_mean2(12)
 test3 <- faculty_mean2(12, data = Wiwi_data)
 test3
 test3$Mean
+
+test4 <- faculty_mean2(3, data=Med_data)
+test4
+
 
 ##########################################
 ## 5. Compare faculty means: 1 semester ##
