@@ -251,10 +251,17 @@ faculty_down <- function(facultyNr){
     Spaltennamen <- c("2_3" ,"Studienmodul" ,"Nicht bestanden", "Ohne Note", "Notenschnitt (nur Bestanden)", "1_0" ,"1_7", "2_7", "3_7" ,"5_0" ,"4_0", "Klausurtermin", "3_0", "Bestanden", "Prüfer" ,"2_0" ,"Semester","Notenschnitt" ,"3_3", "Anzahl" ,"1_3" )
     colnames(res) <- Spaltennamen
     res <- res[,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
-    res <- na.omit(res) # Falls NA's entfernt werden sollen 
+    res <- na.omit(res) # Falls NA's entfernt werden sollen -> erzeugt einen Leeren Data.Frame (Falls lediglich NA's für ein Modul vorhanden sind) 
     fac_mod_list[[moduleNr]] <- res
   }
-  return(fac_mod_list)
+  
+  # Einträge mit leerer Data.Frame entfernen
+  index_df <- which(sapply(fac_mod_list, nrow) == 0)
+  tmp <- fac_mod_list[-index_df]
+  result_list <- tmp
+  
+  # return the result
+  return(result_list)
 }
 
 ## Download und Speichern der Fakultätsdaten als RDS-Datei (einlesen über readRDS-command)
@@ -543,8 +550,10 @@ faculty_meanSem(semester_vec2, 12)
 
 ####### Alternative: mit bereits heruntergeladenen Daten
 faculty_mean2 <- function(faculty_nr, download=TRUE, data=NA){ # download= TRUE bedeutet, dass die vorab geladen wurden. Die Liste mit den Faculty-Daten muss dann unter data angegeben werden
+  
+  # create the data depending on the parameters 
   if (download==TRUE & is.na(data)) {
-    print("Wrong data-type. A list with the faculty data is required. Either set download to FALSE or provide the faculty data if download is set to TRUE")
+    stop("Wrong data-type. A list with the faculty data is required. Either set download to FALSE or provide the faculty data if download is set to TRUE")
   }else{
     if (download==FALSE) {
       tmp1 <- faculty_down(faculty_nr)
@@ -552,14 +561,32 @@ faculty_mean2 <- function(faculty_nr, download=TRUE, data=NA){ # download= TRUE 
        tmp1 <- data
     }
   }
-  tmp2 <- NA
+  
+  # exclude the observations without a mean grade for an exam (this is seen by "-" or "")
+  
+  
+  tmp2 <- tmp1
   for (j in 1:length(tmp1)) {
-    tmp2[j] <- mean(na.omit(as.numeric(Wiwi_data[[j]][,8])))
+    tmp2[[j]] <- subset(tmp2[[j]], tmp2[[j]][8] != "-" & tmp2[[j]][,8] != "" )
+  } 
+  
+  # in some cases this will create a new list element with NA's because there is sometime just one observation for a certain module
+  index_df <- which(sapply(tmp2, nrow) == 0)
+  tmp2 <- tmp2[-index_df]
+  
+  # now there data is "clean". Compute the mean for every module the whole mean
+  tmp3 <- NA
+  for (j in 1:length(tmp2)) {
+    tmp3[j] <- mean(as.numeric(tmp2[[j]][,8]))
   }
-  tmp2 <- na.omit(tmp2)
-  tmp3 <- mean(tmp2)
-  return(tmp3)
-}
+  result <- mean(tmp3)
+  
+  # retur the result
+  return(result)
+  }
+
+
+
 
 # test with separat download -> mean-value expected
 test <- faculty_mean2(12, download = FALSE)
@@ -568,7 +595,6 @@ test <- faculty_mean2(12, download = FALSE)
 test2 <- faculty_mean2(12)
 
 # test with already downloaded data -> mean-value expected
-
 test3 <- faculty_mean2(12, data = Wiwi_data)
 
 ##########################################
