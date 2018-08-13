@@ -324,6 +324,10 @@ saveRDS(sowi_data,"sowi_data")
 theo_data <- faculty_down(1)
 saveRDS(theo_data,"theo_data")
 
+# downladoading the data for all faculties using lapply 
+
+facultyNr_vec <- faculty_data("all")[,2] # can also be sorted but doesn't have to be
+all_data <- lapply(facultyNr_vec, faculty_down)
 
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
@@ -551,20 +555,20 @@ faculty_meanSem(semester_vec2, 12)
 ####### Alternative: mit bereits heruntergeladenen Daten
 ## mit Einführung einer neuen S3-Klasse: "fac_mean"
 
-faculty_mean2 <- function(faculty_nr, download=TRUE, data=NA){ # download= TRUE bedeutet, dass die Daten vorab geladen wurden. Die Liste mit den Faculty-Daten muss dann unter data angegeben werden
+faculty_mean2 <- function(faculty_nr, download=FALSE, FacData=NA){ # download= FALSE bedeutet, dass die Daten vorab geladen wurden. Die Liste mit den Faculty-Daten muss dann unter FacData angegeben werden
   
   # load the needed data for result-format
   faculty_vec <- faculty_data("all")
   faculty_vec <- faculty_vec[order(faculty_vec$value),]
   
   # create the data depending on the parameters 
-  if (download==TRUE & is.na(data)) {
+  if (download==FALSE && is.na(FacData)) {
     stop("Wrong data-type. A list with the faculty data is required. Either set download to FALSE or provide the faculty data if download is set to TRUE")
   }else{
-    if (download==FALSE) {
+    if (download==TRUE) {
       tmp1 <- faculty_down(faculty_nr)
-    }else{
-       tmp1 <- data
+    }else{ # Means download = FAlSE and data provided
+       tmp1 <- FacData
     }
   }
   
@@ -605,18 +609,31 @@ print.fac_mean <- function(obj){
 
 
 # test with separat download -> mean-value expected
-test <- faculty_mean2(12, download = FALSE)
+test <- faculty_mean2(12, download = TRUE)
 
 # test with unsufficient inputs -> error message expected
 test2 <- faculty_mean2(12)
-
+test <- faculty_mean2(12, download = FALSE)
 # test with already downloaded data -> mean-value expected
-test3 <- faculty_mean2(12, data = Wiwi_data)
+test3 <- faculty_mean2(12, FacData = Wiwi_data)
 test3
 test3$Mean
 
-test4 <- faculty_mean2(3, data=Med_data)
+test4 <- faculty_mean2(3, FacData=Med_data)
 test4
+
+# test with for-loop for several faculties
+test5 <- list()
+for (i in 1:length(fac_vec2)) {
+  test5[[i]] <- faculty_mean2(faculty_nr = i, download = TRUE)
+}
+View(test5)
+class(test5)
+
+## see new Funtion (section 9) for plotting the functions
+
+
+
 
 
 ##########################################
@@ -900,6 +917,50 @@ date_compare_sem(semester_df$value, 12, 104, plot = TRUE)
 
 
 
+
+
+
+
+
+
+
+############################################################################
+## 9. Plot function depending on class #####################################
+############################################################################
+
+plotFS <- function(x){
+  UseMethod("plotFS", x)
+}
+
+plotFS.fac_mean <- function(x){
+  print("Klappt")
+}
+
+plotFS.list <- function(x){
+  if (class(x[[1]]) != "fac_mean") {
+    stop("The list-elements have to be of class fac_mean")
+  }else{
+    faculty_means <- NA
+    faculty_names <- NA
+    for (i in 1:length(x)) {
+      faculty_means[i] <- x[[i]]$Mean
+      faculty_names[i] <- x[[i]]$Faculty
+    }
+    df <- data.frame(faculty_means, faculty_names)
+    ggplot(df, aes(x = faculty_names, y = faculty_means, fill=faculty_names))+
+      geom_bar(stat = "identity")+
+      xlab("Faculty") + ylab("Mean grades") +
+      coord_cartesian(ylim=c(min(df$faculty_means-0.5),max(df$faculty_means)+0.5)) +
+      guides(fill=guide_legend(title=NULL)) +
+      ggtitle("Comparison of faculty means")
+    
+            
+  }
+}
+
+plotFS(test5)
+plotFS(4)
+plotFS(test4)
 
 
 #################################################
