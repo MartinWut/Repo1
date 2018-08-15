@@ -1,7 +1,12 @@
 ### Version 0.2 R-Package Flexstat-Crawler
  
 setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler") # wichtig für den Programmablauf
-setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler/faculty_data") # zum laden der Daten
+setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler/faculty_data") # zum laden der einzelnen Daten
+setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler") # wichtig für den Programmablauf
+
+# load the data stored in "all_data"
+all_data <- readRDS("all_data")
+
 
 #library(jsonlite)
 library(httr)
@@ -188,6 +193,12 @@ module_data <- function(semester, faculty, module){
   stop_for_status(response)
   responseJSON <- content(response, encoding = "UTF-8", type = "text")
   responseDF <- fromJSON(responseJSON)$data$records
+  
+  # ordnen der Spalten (nur, wenn der resultierende Data.Frame nicht leer ist)
+  if(length(responseDF) != 0 ){
+  responseDF <- responseDF[,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
+  }
+  
   return(responseDF)
 }
 
@@ -345,7 +356,7 @@ saveRDS(all_data, "all_data")
 
 module_mean <- function(sem_vec, faculty, module){
   res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
-  grade_entries <- sapply(res_allSem, function(x){x[18]})                             #extract elements for "Notenschnitt" (entry 18 in each list element)
+  grade_entries <- sapply(res_allSem, function(x){x[8]})                             #extract elements for "Notenschnitt" (entry 8 in each list element)
   grades <- unlist(sapply(grade_entries, function(x) x[!is.null(x)]))   #throw out all NULL list elements
   grades <- grades[grades != "-" & grades != ""]                   #throw out all list elements without a grade entry ("-", "")
   mean_vec <- as.numeric(grades)
@@ -357,7 +368,124 @@ module_mean <- function(sem_vec, faculty, module){
 semester_vec <- semester_df$value
 semester_vec2 <- semester_vec[4:length(semester_vec)]  #WS 2017/18 (4. Element) bis WS 2003/04
 
-module_mean(semester_vec2, 12, 217)
+module_mean(semester_vec, 12, 217)
+
+
+############ Alternative module_mean-function
+
+module_mean2 <- function(semester_vector = "all", faculty_nr= NA, module_nr=NA){
+  
+  # create additional data about semester-numbers and faculty-numbers
+  semester_all <- semester_data("all")[,2]
+  faculty_all <- faculty_data("all")
+  modules_faculty <- list_modules(faculty_nr)
+  
+  # First Case: wrong Input
+  if (length(faculty_nr) != 1 || is.na(faculty_nr) == TRUE || semester_vector == "wrong" || is.na(module_nr) == TRUE) {
+    stop("Wrong or missing input")
+  }else{
+  
+  ## Second Case: all Semesters, one Module
+  # load the data for every semester
+  if (semester_vector == "all" && length(module_nr) == 1 && length(faculty_nr) == 1 ) {
+    
+    tmp1 <- lapply(semester_all, module_data, faculty = faculty_nr, module = module_nr)
+  
+  # clean the data -> remove empty semester entries
+    index_df <- which(sapply(tmp1, length) == 0)
+    tmp1 <- tmp1[-index_df]  
+  # remove entries with NA's for mean-value
+    for (j in 1:length(tmp1)) {
+      tmp1[[j]] <- subset(tmp1[[j]], tmp1[[j]][8] != "-" & tmp1[[j]][,8] != "" )
+    } 
+  
+  # in some cases this will create a new list element with NA's because there is sometime just one observation for a certain module
+    index_df <- which(sapply(tmp1, nrow) == 0)
+    tmp1 <- tmp1[-index_df]
+  
+  # compute the mean for the cleaned data  
+    mean_values <- sapply(tmp1,function(x){x[8]}) 
+    mean_values <- unlist(mean_values)
+    numeric_values <- as.numeric(mean_values)
+    overall_mean <- mean(numeric_values)
+  }else{
+    
+   # Third Case: Mean value for certain semesters ( more/equal than/to 1 but not all semesters)  
+    if (length(semester_vector) >= 1 && semester_vector != "all") {
+      
+      sem_tmp <- semester_vector
+      
+      tmp1 <- lapply(sem_tmp, module_data, faculty = faculty_nr, module = module_nr)
+      
+      # clean the data -> remove empty semester entries
+      index_df <- which(sapply(tmp1, length) == 0)
+      tmp1 <- tmp1[-index_df]  
+      # remove entries with NA's for mean-value
+      for (j in 1:length(tmp1)) {
+        tmp1[[j]] <- subset(tmp1[[j]], tmp1[[j]][8] != "-" & tmp1[[j]][,8] != "" )
+      } 
+      
+      # in some cases this will create a new list element with NA's because there is sometime just one observation for a certain module
+      index_df <- which(sapply(tmp1, nrow) == 0)
+      tmp1 <- tmp1[-index_df]
+      
+      # compute the mean for the cleaned data  
+      mean_values <- sapply(tmp1,function(x){x[8]}) 
+      mean_values <- unlist(mean_values)
+      numeric_values <- as.numeric(mean_values)
+      overall_mean <- mean(numeric_values)  
+      }
+    }
+  }
+
+  # define the result as the mean and the name of the module
+  module_name <- subset(modules_faculty[,1], modules_faculty[,2] == module_nr)
+  result <- list(Mean = overall_mean,Module = module_name )
+  
+  # define a class object (S3)
+  #class(result) <- append(class(result), "faculty_mean")
+  attr(result, "class") <- "module_mean"
+  
+  # return the result
+  result
+  
+}
+
+# Define the depiction of the module_mean2-function
+print.module_mean <- function(obj){
+  cat("Mean = ", obj$Mean,"\n")
+  cat("Module = ", obj$Module, "\n")
+}
+
+
+
+# test for wrong input format -> error message expected
+module_mean2(semester_vector = "wrong")
+module_mean2()
+module_mean2(semester_vector = "all", module_vector = 217)
+module_mean2(semester_vector = "all", faculty_nr = c(1,12), module_vector = 217)
+
+# test for correctnes of module_mean2  (all Semesters, Wiwi-Faculty(12), Econometrics (217)) -> expected Value: 3.036818
+test_1 <- module_mean2(semester_vector = "all", faculty_nr = 12, module_nr = c(217))
+test_1
+
+# test for a specific semester range (valua 50 - 55)
+test_2 <- module_mean2(semester_vector = c(50:55), faculty_nr = 12, module_nr = 217)
+test_2
+
+# test for more than one module (here module 217, 104, 109 = Econometrics, Mathematics, Statistics)
+
+module_test_vec <- c(217,104,109)
+
+test_3 <- lapply(module_test_vec, module_mean2, semester_vector = "all", faculty_nr = 12 )
+  
+
+
+
+
+
+
+
 
 
 ##########################################
@@ -562,6 +690,16 @@ faculty_meanSem(semester_vec2, 12)
 
 
 
+
+
+
+
+
+
+
+
+
+
 ####### Alternative: mit bereits heruntergeladenen Daten
 ## mit Einführung einer neuen S3-Klasse: "fac_mean"
 ## mit faculty_nr = "all" and download = TRUE werden alle Faculty-means berechnet
@@ -617,6 +755,7 @@ print.fac_mean <- function(obj){
 }
 
 
+### Testen der faculty-mean2-Funtion
 
 
 # test with separat download -> mean-value expected
@@ -640,7 +779,10 @@ View(test6)
 class(test6)
 
 # using lapply (takes some time!!!!) 
-test7 <- lapply(as.list(faculty_vec), faculty_mean2, download = TRUE)
+
+system.time(
+test7 <- lapply(as.list(fac_vec2), faculty_mean2, download = TRUE)
+)
 test7
 ## see new Funtion (section 9) for plotting the functions
 
@@ -656,8 +798,19 @@ test8 <- list(NA)
 for (j in 1:length(fac_vec2)) {
   test8[[j]] <- faculty_mean2(fac_vec2[j], download = FALSE, FacData = all_data[[j]])
 }
-
 View(test8)
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##########################################
 ## 5. Compare faculty means: 1 semester ##
@@ -956,13 +1109,17 @@ plotFS <- function(x){
 }
 
 plotFS.fac_mean <- function(x){
-  print("Klappt")
+  print("Noch offen. Sinnvollen Plot-Output für einen Faculty-Mean-Wert überlegen")
+}
+
+plotFS.module_mean <- function(x){
+  print("Noch offen. Sinnvollen Plot-Output für einen Module-Mean-Wert überlegen")
 }
 
 plotFS.list <- function(x){
-  if (class(x[[1]]) != "fac_mean") {
-    stop("The list-elements have to be of class fac_mean")
-  }else{
+  
+  if (class(x[[1]]) == "fac_mean") {
+    
     faculty_means <- NA
     faculty_names <- NA
     for (i in 1:length(x)) {
@@ -977,15 +1134,50 @@ plotFS.list <- function(x){
       guides(fill=guide_legend(title=NULL)) +
       ggtitle("Comparison of faculty means")
     
-            
+  }else{
+    if (class(x[[1]]) == "module_mean") {
+      
+    module_means <- NA
+    module_names <- NA
+    
+    for (i in 1:length(x)) {
+      module_means[i] <- x[[i]]$Mean
+      module_names[i] <- x[[i]]$Module
+    }  
+    
+    df <- data.frame(module_means, module_names)
+    ggplot(df, aes(x = module_names, y = module_means, fill=module_names))+
+      geom_bar(stat = "identity")+
+      xlab("Module") + ylab("Mean grades") +
+      coord_cartesian(ylim=c(min(df$module_means-0.5),max(df$module_means)+0.5)) +
+      guides(fill=guide_legend(title=NULL)) +
+      ggtitle("Comparison of module means")
+    }
   }
 }
 
-plotFS(test5)
+# Testing the plotFS-Function
+
+# testing for errors
 plotFS(4)
+
+plotFS(test5)
+
 plotFS(test4)
+plotFS(test7)
+
+# test for comparison of faculty means
+test8 <- list(NA)
+for (j in 1:length(fac_vec2)) {
+  test8[[j]] <- faculty_mean2(fac_vec2[j], download = FALSE, FacData = all_data[[j]])
+}
 plotFS(test8)
 
+# test for comparison of module means
+module_test_vec <- c(217,104,109)
+test_3 <- lapply(module_test_vec, module_mean2, semester_vector = "all", faculty_nr = 12 )
+
+plotFS(test_3)
 
 #################################################
 #################################################
