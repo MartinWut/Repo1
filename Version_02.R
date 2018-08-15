@@ -1,5 +1,8 @@
 ### Version 0.2 R-Package Flexstat-Crawler
  
+setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler") # wichtig für den Programmablauf
+setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler/faculty_data") # zum laden der Daten
+
 #library(jsonlite)
 library(httr)
 #install.packages("rjson")
@@ -15,6 +18,8 @@ library(stringr)
 #library(reshape2)
 #install.packages("tidyr")
 library(tidyr)
+
+
 
 
 #############################################################
@@ -189,7 +194,7 @@ module_data <- function(semester, faculty, module){
 ÖkoI <- module_data(64, 12, 217)
 ÖkoI
 
-module_data(60, 12, module = c(104,217))
+
 
 
 
@@ -205,6 +210,10 @@ faculty_all <- faculty_data("all")
 
 
 single_request <- function(Semester, Fakultät, Modul){
+  
+  semester_all <- semester_data("all")
+  faculty_all <- faculty_data("all")
+  
   resultsURL <- "https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/queryexecution/results"
   requestJSON <- readChar("json/request.json", file.info("json/request.json")$size)
   
@@ -328,6 +337,7 @@ saveRDS(theo_data,"theo_data")
 
 facultyNr_vec <- faculty_data("all")[,2] # can also be sorted but doesn't have to be
 all_data <- lapply(facultyNr_vec, faculty_down)
+saveRDS(all_data, "all_data")
 
 ##########################################
 ## 3. 1 faculty, 1 module, > 1 semester ##
@@ -554,6 +564,7 @@ faculty_meanSem(semester_vec2, 12)
 
 ####### Alternative: mit bereits heruntergeladenen Daten
 ## mit Einführung einer neuen S3-Klasse: "fac_mean"
+## mit faculty_nr = "all" and download = TRUE werden alle Faculty-means berechnet
 
 faculty_mean2 <- function(faculty_nr, download=FALSE, FacData=NA){ # download= FALSE bedeutet, dass die Daten vorab geladen wurden. Die Liste mit den Faculty-Daten muss dann unter FacData angegeben werden
   
@@ -567,7 +578,7 @@ faculty_mean2 <- function(faculty_nr, download=FALSE, FacData=NA){ # download= F
   }else{
     if (download==TRUE) {
       tmp1 <- faculty_down(faculty_nr)
-    }else{ # Means download = FAlSE and data provided
+    }else{ # Means download = FALSE and data provided
        tmp1 <- FacData
     }
   }
@@ -582,7 +593,7 @@ faculty_mean2 <- function(faculty_nr, download=FALSE, FacData=NA){ # download= F
   index_df <- which(sapply(tmp2, nrow) == 0)
   tmp2 <- tmp2[-index_df]
   
-  # now there data is "clean". Compute the mean for every module the whole mean
+  # now the data is "clean". Compute the mean for every module the whole mean
   tmp3 <- NA
   for (j in 1:length(tmp2)) {
     tmp3[j] <- mean(as.numeric(tmp2[[j]][,8]))
@@ -610,31 +621,43 @@ print.fac_mean <- function(obj){
 
 # test with separat download -> mean-value expected
 test <- faculty_mean2(12, download = TRUE)
-
 # test with unsufficient inputs -> error message expected
 test2 <- faculty_mean2(12)
-test <- faculty_mean2(12, download = FALSE)
+test3 <- faculty_mean2(12, download = FALSE)
 # test with already downloaded data -> mean-value expected
-test3 <- faculty_mean2(12, FacData = Wiwi_data)
-test3
-test3$Mean
-
-test4 <- faculty_mean2(3, FacData=Med_data)
+test4 <- faculty_mean2(12, FacData = Wiwi_data)
 test4
-
+test4$Mean
+test5 <- faculty_mean2(3, FacData=Med_data)
+test5
 # test with for-loop for several faculties
-test5 <- list()
-for (i in 1:length(fac_vec2)) {
-  test5[[i]] <- faculty_mean2(faculty_nr = i, download = TRUE)
+test6 <- list()
+faculty_vec <- c(1,2)  # define a vector with faculty-numbers: faculty_vec (here: number 1 and 2)
+for (i in 1:length(faculty_vec)) {
+  test6[[i]] <- faculty_mean2(faculty_nr = i, download = TRUE)
 }
-View(test5)
-class(test5)
+View(test6)
+class(test6)
 
+# using lapply (takes some time!!!!) 
+test7 <- lapply(as.list(faculty_vec), faculty_mean2, download = TRUE)
+test7
 ## see new Funtion (section 9) for plotting the functions
 
+# test with perloaded data (all_data stored as RDS-file)
+test8 <- lapply(all_data, faculty_mean2, faculty_nr = faculty_data("all")[,2], download = FALSE)
 
+  
+fac_vec2 <- faculty_data("all")[,2] # load the faculty-numbers as input for the faculty_mean-function
+test8 <- list(NA)
 
+  ### Wichtig: für den loop ist es erfoderlich, dass die Reihenfolge der Fakultätsnummer
+  # (hier ungeordent) mit der Reihenfolge der Fakultätsdaten der liste all_data übereinstimmt
+for (j in 1:length(fac_vec2)) {
+  test8[[j]] <- faculty_mean2(fac_vec2[j], download = FALSE, FacData = all_data[[j]])
+}
 
+View(test8)
 
 ##########################################
 ## 5. Compare faculty means: 1 semester ##
@@ -961,15 +984,23 @@ plotFS.list <- function(x){
 plotFS(test5)
 plotFS(4)
 plotFS(test4)
+plotFS(test8)
 
 
+#################################################
+#################################################
+#################################################
 #################################################
 #################################################
 #################################################
 #################################################
 #### Alternativ: eine Funktion -> gelooped ######
 #################################################
-
+#################################################
+#################################################
+#################################################
+#################################################
+#################################################
 
 
 ### Creating a Dataframe of the semesternumber
