@@ -28,6 +28,8 @@ library(stringr)
 #library(reshape2)
 #install.packages("tidyr")
 library(tidyr)
+#install.packages("rlist")
+library(rlist)
 
 
 
@@ -1013,37 +1015,61 @@ date_compare2 <- function(sem_vec, faculty, module){
   return(result)
 }
 
+
+
 sem_info <- unlist(sapply(Wiwi_data, function(x)x[1][x[3] == "Econometrics I"])) #semesters for all Eco I entries
-date_info <- unlist(sapply(Wiwi_data, function(x)x[2][x[3] == "Econometrics I"])) #exam dates for all Eco I entries
+sem_info <- sem_info[length(sem_info):1]
+sem_info
+
+#sem_fac <- table(factor(sem_info, levels=unique(sem_info)))
+#sem_fac
+#sem_fac <- as.numeric(sem_fac)
+#sem_fac
+#count_var <- unlist(lapply(sem_fac, seq))
+#count_var
+
+date_info <- unlist(sapply(Wiwi_data, function(x)x[2][x[3] == "Econometrics I"]))#exam dates for all Eco I entries
+date_info <- date_info[length(date_info):1]
+date_info 
+
 mean_info  <- unlist(sapply(Wiwi_data, function(x)x[8][x[3] == "Econometrics I"]))  #means for all Eco I entries
+mean_info <- mean_info[length(mean_info):1]
+mean_info <- as.numeric(gsub("-", NA, mean_info))
+mean_info
 
+#info_df <- na.omit(data.frame(sem_info,date_info, mean_info, count_var)) 
+info_df <- na.omit(data.frame(sem_info,date_info, mean_info)) 
+info_df
 
-Wiwi_data_modules <- unlist(sapply(Wiwi_data, function(x){x[3]}))
-which(Wiwi_data_modules == "Econometrics I")
-View(unlist(lapply(Wiwi_data, function(x)x[x[3] == "Econometrics I"])))
-View(unlist(sapply(Wiwi_data, function(x)x[x[3] == "Econometrics I"])))
-#Wiwi_data[Wiwi_data$Studienmodul == "Econometrics I", ]
-Wiwi_data[[25]]['Studienmodul']
-Wiwi_data[[25]][3]
+sem_fac <- table(factor(info_df$sem_info, levels=unique(info_df$sem_info)))
+sem_fac
+sem_fac <- as.numeric(sem_fac)
+sem_fac
+count_var <- unlist(lapply(sem_fac, seq))
+count_var
+
+info_df$count_var <- count_var
+info_df
+
 
 
 
 #mydf1[mydf1$x<0.05, ]
 #head(lapply(mylist, function(x)x[x$x<0.05, ]))
 
-Wiwi_data_semster <- unlist(sapply(Wiwi_data, function(x){x[1]}))
-semester_all_vector <- semester_data("all")
+#Wiwi_data_semster <- unlist(sapply(Wiwi_data, function(x){x[1]}))
+#semester_all_vector <- semester_data("all")
 #put semester names in the same format as in result data files (e.g. WS17/18, SoSe18)
-semester_names <- as.character(semester_all_vector[1])
-semester_names <- gsub("SS", "SoSe", x = semester_names)
-semester_names <- gsub("WS 20", "WS", x = semester_names)
-semester_names <- gsub("/20", "/", x = semester_names)
-semester_names <- gsub("SoSe 20", "SoSe", x = semester_names)
-semester_names <- gsub("\"", "", x = semester_names)
-semester_names <- substr(semester_names,2,nchar(semester_names)-1)
-semester_names <- unlist(strsplit(semester_names, ", "))
-semester_all_vector$label <- semester_names
-semester_all_vector
+#semester_names <- as.character(semester_all_vector[1])
+#semester_names <- gsub("SS", "SoSe", x = semester_names)
+#semester_names <- gsub("WS 20", "WS", x = semester_names)
+#semester_names <- gsub("/20", "/", x = semester_names)
+#semester_names <- gsub("SoSe 20", "SoSe", x = semester_names)
+#semester_names <- gsub("\"", "", x = semester_names)
+#semester_names <- substr(semester_names,2,nchar(semester_names)-1)
+#semester_names <- unlist(strsplit(semester_names, ", "))
+#semester_all_vector$label <- semester_names
+#semester_all_vector
 
 
 
