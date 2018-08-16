@@ -4,6 +4,11 @@ setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler") # wichtig für den
 setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler/faculty_data") # zum laden der einzelnen Daten
 setwd("/Users/martinwutke/Desktop/Git/Repo1/FlexStatCrawler") # wichtig für den Programmablauf
 
+setwd("C:/Users/gerle/Desktop/Statistische Programmierung mit R/Repo1")
+setwd("C:/Users/gerle/Desktop/Statistische Programmierung mit R/Repo1/faculty_data")
+setwd("C:/Users/gerle/Desktop/Statistische Programmierung mit R/Repo1")
+
+
 # load the data stored in "all_data"
 all_data <- readRDS("all_data")
 
@@ -83,6 +88,7 @@ semester_data <- function(x){ # input either "all" or a certain semester in form
 semester_data("WS 2016/2017")
 semester_data("all")
 
+
 #### get faculties ####
 
 faculty_get <- GET("https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/dropdownvalues?_dc=1525710916300&type=FAK&path=&selectAllDummy=false&forQueryId=215&page=1&start=0&limit=25")
@@ -113,6 +119,7 @@ give_faculty <- function(name){
 }
 
 give_faculty("Wirtschaftswissenschaftliche Fakultät")
+
 
 ############################################
 ###### all-in-one faculty - Function ######
@@ -942,9 +949,9 @@ examiner_stud(semester_winter, 12, 113,mean=TRUE, plot = TRUE)
 date_compare <- function(sem_vec, faculty, module, plot = FALSE){
   res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
   # save the infomrations in date.frame
-  sem_info <- unlist(sapply(res_allSem, function(x){x[17]}))
-  date_info <- unlist(sapply(res_allSem, function(x){x[12]}))
-  mean_info  <- unlist(sapply(res_allSem, function(x){x[18]}))
+  sem_info <- unlist(sapply(res_allSem, function(x){x[1]}))
+  date_info <- unlist(sapply(res_allSem, function(x){x[2]}))
+  mean_info  <- unlist(sapply(res_allSem, function(x){x[8]}))
   date_names <- names(mean_info)  
   #for group variable with groups "Notenschnitt1", "Notenschnitt2", etc.
   #problem: for one entry the date name is "Notenschnitt
@@ -984,6 +991,68 @@ module_data(43, 12, 104) #3 Einträge für Klausurtermine
 
 date_compare(semester_df$value, 12, 217, plot = TRUE)
 date_compare(semester_df$value, 12, 217)
+
+
+####  date_compare function with possible use of downloaded data ####
+
+date_compare2 <- function(sem_vec, faculty, module){
+  #res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
+  # save the infomrations in date.frame
+  sem_info <- unlist(sapply(FacData, function(x)x[1][x[3] == module]))
+  date_info <- unlist(sapply(FacData, function(x)x[2][x[3] == module]))
+  mean_info  <- unlist(sapply(FacData, function(x)x[8][x[3] == module])) 
+  date_names <- names(mean_info)  
+  #for group variable with groups "Notenschnitt1", "Notenschnitt2", etc.
+  #problem: for one entry the date name is "Notenschnitt
+  date_names <- gsub("Notenschnitt1", "Notenschnitt", x = date_names)
+  mean_info <- as.numeric(gsub("-", NA,  mean_info))
+  info_df <- na.omit(data.frame(sem_info,date_info, mean_info, date_names)) 
+  info_df$date_info <- as.Date(info_df[,2], "%d.%m.%Y") 
+  info_df <- spread(info_df, date_names, mean_info) #transform to wide format
+  result <- apply(info_df[,c(3:ncol(info_df))], MARGIN = 2, FUN = mean, na.rm = T)
+  return(result)
+}
+
+sem_info <- unlist(sapply(Wiwi_data, function(x)x[1][x[3] == "Econometrics I"])) #semesters for all Eco I entries
+date_info <- unlist(sapply(Wiwi_data, function(x)x[2][x[3] == "Econometrics I"])) #exam dates for all Eco I entries
+mean_info  <- unlist(sapply(Wiwi_data, function(x)x[8][x[3] == "Econometrics I"]))  #means for all Eco I entries
+
+
+Wiwi_data_modules <- unlist(sapply(Wiwi_data, function(x){x[3]}))
+which(Wiwi_data_modules == "Econometrics I")
+View(unlist(lapply(Wiwi_data, function(x)x[x[3] == "Econometrics I"])))
+View(unlist(sapply(Wiwi_data, function(x)x[x[3] == "Econometrics I"])))
+#Wiwi_data[Wiwi_data$Studienmodul == "Econometrics I", ]
+Wiwi_data[[25]]['Studienmodul']
+Wiwi_data[[25]][3]
+
+
+
+#mydf1[mydf1$x<0.05, ]
+#head(lapply(mylist, function(x)x[x$x<0.05, ]))
+
+Wiwi_data_semster <- unlist(sapply(Wiwi_data, function(x){x[1]}))
+semester_all_vector <- semester_data("all")
+#put semester names in the same format as in result data files (e.g. WS17/18, SoSe18)
+semester_names <- as.character(semester_all_vector[1])
+semester_names <- gsub("SS", "SoSe", x = semester_names)
+semester_names <- gsub("WS 20", "WS", x = semester_names)
+semester_names <- gsub("/20", "/", x = semester_names)
+semester_names <- gsub("SoSe 20", "SoSe", x = semester_names)
+semester_names <- gsub("\"", "", x = semester_names)
+semester_names <- substr(semester_names,2,nchar(semester_names)-1)
+semester_names <- unlist(strsplit(semester_names, ", "))
+semester_all_vector$label <- semester_names
+semester_all_vector
+
+
+
+date_compare2(semester_df$value, 12, 217)
+
+
+
+
+
 
 date_compare_old <- function(sem_vec, faculty, module, plot = FALSE){
   res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
