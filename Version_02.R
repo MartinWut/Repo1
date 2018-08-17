@@ -1030,6 +1030,9 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
   sem_fac <- as.numeric(table(factor(info_df$sem_info, levels=unique(info_df$sem_info))))
     # create a count variable for grouping the grade means acording to exam dates per semester
   count_var <- unlist(lapply(sem_fac, seq))
+  for (i in 1:length(count_var)) {
+    count_var[i] <- paste("Date ", count_var[i])
+  }
   info_df$count_var <- count_var
     # append count variable to data frame info_df
   
@@ -1052,91 +1055,29 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
   
   # transform info_df to wide format to group exam dates by count variable
   info_df <- spread(info_df, count_var, mean_info) #transform to wide format
-  result <- apply(info_df[,c(3:ncol(info_df))], MARGIN = 2, FUN = mean, na.rm = T)
-  return(result)
+  res <- apply(info_df[,c(3:ncol(info_df))], MARGIN = 2, FUN = mean, na.rm = T)
+  result_vector <- list(Exam_date = names(res), Mean = res)
+  
+  # define a class object (S3)
+  attr(result_vector, "class") <- "date_compare"
+  
+  # return the result
+  return(result_vector)
 }
+
+# define the representation of the date_compare2 function
+print.date_compare <- function(obj){
+  cat("Exam date =", obj$Exam_date, "\n")
+  cat("Mean =", obj$Mean, "\n")
+}
+
+#To Do: Fehlermeldungen, Code strukturieren
+
 
 date_compare2(12, "Econometrics I", download = TRUE)
 date_compare2(12, "Econometrics I", download = FALSE, FacData = Wiwi_data)
-date_compare2(12, "Econometrics I", semester_vec = sem_vec, download = FALSE, FacData = Wiwi_data) #Ergebnis stimmt, trotz Warnmeldung!
-
 sem_vec <- c("WS16/17", "SoSe17", "WS17/18", "SoSe18")
-
-
-sem_info <- unlist(sapply(Wiwi_data, function(x)x[1][x[3] == "Econometrics I"])) #semesters for all Eco I entries
-sem_info <- sem_info[length(sem_info):1]
-sem_info
-
-#sem_fac <- table(factor(sem_info, levels=unique(sem_info)))
-#sem_fac
-#sem_fac <- as.numeric(sem_fac)
-#sem_fac
-#count_var <- unlist(lapply(sem_fac, seq))
-#count_var
-
-date_info <- unlist(sapply(Wiwi_data, function(x)x[2][x[3] == "Econometrics I"]))#exam dates for all Eco I entries
-date_info <- date_info[length(date_info):1]
-date_info 
-
-mean_info  <- unlist(sapply(Wiwi_data, function(x)x[8][x[3] == "Econometrics I"]))  #means for all Eco I entries
-mean_info <- mean_info[length(mean_info):1]
-mean_info <- as.numeric(gsub("-", NA, mean_info))
-mean_info
-
-#info_df <- na.omit(data.frame(sem_info,date_info, mean_info, count_var)) 
-info_df <- na.omit(data.frame(sem_info,date_info, mean_info)) 
-info_df
-
-sem_fac <- as.numeric(table(factor(info_df$sem_info, levels=unique(info_df$sem_info))))
-sem_fac
-#sem_fac <- as.numeric(sem_fac)
-#sem_fac
-count_var <- unlist(lapply(sem_fac, seq))
-count_var
-
-info_df$count_var <- count_var
-info_df
-
-sem_vec <- c("WS16/17", "SoSe17", "WS17/18", "SoSe18")
-
-sub_df <- data.frame(sem_info=character(), date_info=character(), mean_info=numeric(), count_var=integer())
-sub_df
-
-for (i in 1:length(info_df$sem_info)) {
-  for (j in 1:length(sem_vec)) {
-    if (info_df$sem_info[i] == sem_vec[j]){
-      sub_df <- rbind(sub_df, info_df[i,])
-    }
-  }
-}
-sub_df
-
-
-
-
-#mydf1[mydf1$x<0.05, ]
-#head(lapply(mylist, function(x)x[x$x<0.05, ]))
-
-#Wiwi_data_semster <- unlist(sapply(Wiwi_data, function(x){x[1]}))
-#semester_all_vector <- semester_data("all")
-#put semester names in the same format as in result data files (e.g. WS17/18, SoSe18)
-#semester_names <- as.character(semester_all_vector[1])
-#semester_names <- gsub("SS", "SoSe", x = semester_names)
-#semester_names <- gsub("WS 20", "WS", x = semester_names)
-#semester_names <- gsub("/20", "/", x = semester_names)
-#semester_names <- gsub("SoSe 20", "SoSe", x = semester_names)
-#semester_names <- gsub("\"", "", x = semester_names)
-#semester_names <- substr(semester_names,2,nchar(semester_names)-1)
-#semester_names <- unlist(strsplit(semester_names, ", "))
-#semester_all_vector$label <- semester_names
-#semester_all_vector
-
-
-
-date_compare2(semester_df$value, 12, 217)
-
-
-
+date_compare2(12, "Econometrics I", semester_vec = sem_vec, download = FALSE, FacData = Wiwi_data) # Ergebnis stimmt trotz Warnmeldung
 
 
 
