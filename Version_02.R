@@ -1008,33 +1008,50 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
          the faculty data, if download is set to FALSE")
   }else{
     if (download==TRUE){
-      FacData <- faculty_down(faculty_nr)
+      
+      # replace semester names by semester values
+      sem_replace <- gsub("WS", "WS 20", semester_vec)
+      sem_replace <- gsub("/", "/20", sem_replace)
+      sem_replace <- gsub("SoSe", "SS 20", sem_replace)
+      semester_nr <- unlist(lapply(sem_new, semester_data))
+      
+      #replace module name by module value
+      module_list <- list_modules(faculty_nr)
+      module_info <- module_list[grepl(module, module_list$label) == TRUE, ][1,] # use first entry: for 'counted' module names (like 'Econometrics I' you also get entries for 'Econometrics II' etc. --> you only need 'Econometrics I' (= first) entry      
+      module_nr <- as.numeric(module_info$value)
+      
+      # use module_data function to get the data for the chosen mosule and semesters
+      FacData <- lapply(semester_nr, module_data, faculty = faculty_nr, module = module_nr)
     } #else: FacData = FacData if download = FALSE and data provided
   }
-  # save the informations in date.frame
+
+  # extract semesters for all modul entries and reorder the resulting vector bottom-up 
+  # to have the semester entries for the first exam dates always listed first
   sem_info <- unlist(sapply(FacData, function(x)x[1][x[3] == module]))
-   # get semesters for all module entries
   sem_info <- sem_info[length(sem_info):1]
-    # the order of FacData always lists the latest exam date first and the first exam date last 
-    # --> reorder each vector extracted from FacData bottom-up to have the first exam dates always listed first
+
+  # extract exam dates for all modul entries and reorder the resulting vector bottom-up 
+  # to have the first exam dates always listed first
   date_info <- unlist(sapply(FacData, function(x)x[2][x[3] == module]))
-    # get the exam dates for all modul entries
   date_info <- date_info[length(date_info):1]
+  
+  # extract the grade means for all modul entries, reorder the resulting vector bottom-up
+  # and replace the missing values by NAs
   mean_info  <- unlist(sapply(FacData, function(x)x[8][x[3] == module])) 
-    # get the grade means for all module entries
   mean_info <- mean_info[length(mean_info):1]
   mean_info <- as.numeric(gsub("-", NA, mean_info))
-    # replace missing values in the grade mean vector by NA values
+  
+  # save semester, date and mean information in a data frame
   info_df <- na.omit(data.frame(sem_info,date_info, mean_info)) 
-    # save semester, date and mean information in a data frame
+  
+  # create a count variable for grouping the grade means according to exam dates per semester 
+  # and append count variable to the data frame info_df
   sem_fac <- as.numeric(table(factor(info_df$sem_info, levels=unique(info_df$sem_info))))
-    # create a count variable for grouping the grade means acording to exam dates per semester
   count_var <- unlist(lapply(sem_fac, seq))
   for (i in 1:length(count_var)) {
     count_var[i] <- paste("Date ", count_var[i])
   }
   info_df$count_var <- count_var
-    # append count variable to data frame info_df
   
   # if not all semester shall be considered, create a subset of info_df for the corresponding semesters
   if (semester_vec != "all"){
@@ -1071,14 +1088,95 @@ print.date_compare <- function(obj){
   cat("Mean =", obj$Mean, "\n")
 }
 
-#To Do: Fehlermeldungen, Code strukturieren
+#To Do: Fehlermeldungen
+#To Do: use modul_data as download function instead of faculty_down
 
 
 date_compare2(12, "Econometrics I", download = TRUE)
 date_compare2(12, "Econometrics I", download = FALSE, FacData = Wiwi_data)
 sem_vec <- c("WS16/17", "SoSe17", "WS17/18", "SoSe18")
+date_compare2(12, "Econometrics I", semester_vec = sem_vec, download = TRUE) # Ergebnis stimmt trotz Warnmeldung
 date_compare2(12, "Econometrics I", semester_vec = sem_vec, download = FALSE, FacData = Wiwi_data) # Ergebnis stimmt trotz Warnmeldung
 
+
+# bei download=TRUE ist Funktion wesentlich schneller bei Anwendung der module_data-Funktion, anstelle der faculty_down-Funktion!
+date_compare2_old <- function(faculty_nr, module, semester_vec="all", download=FALSE, FacData=NA){
+  # module has to be a character string identical to the spelling in FlexStat (e.g "Econometrics I)
+  # semster_vec has to be a character vector with semester entries in the form "WSYY" for winter semester
+  # and "SoSeYY" for summer semester
+  
+  # create the data depending on the parameters
+  if (download==FALSE && is.na(FacData)){
+    stop("Wrong data type. A list with the faculty data is required. Either set download to TRUE or provide
+         the faculty data, if download is set to FALSE")
+  }else{
+    if (download==TRUE){
+      FacData <- faculty_down(faculty_nr)
+    } #else: FacData = FacData if download = FALSE and data provided
+  }
+  
+  # extract semesters for all modul entries and reorder the resulting vector bottom-up 
+  # to have the semester entries for the first exam dates always listed first
+  sem_info <- unlist(sapply(FacData, function(x)x[1][x[3] == module]))
+  sem_info <- sem_info[length(sem_info):1]
+  
+  # extract exam dates for all modul entries and reorder the resulting vector bottom-up 
+  # to have the first exam dates always listed first
+  date_info <- unlist(sapply(FacData, function(x)x[2][x[3] == module]))
+  date_info <- date_info[length(date_info):1]
+  
+  # extract the grade means for all modul entries, reorder the resulting vector bottom-up
+  # and replace the missing values by NAs
+  mean_info  <- unlist(sapply(FacData, function(x)x[8][x[3] == module])) 
+  mean_info <- mean_info[length(mean_info):1]
+  mean_info <- as.numeric(gsub("-", NA, mean_info))
+  
+  # save semester, date and mean information in a data frame
+  info_df <- na.omit(data.frame(sem_info,date_info, mean_info)) 
+  
+  # create a count variable for grouping the grade means according to exam dates per semester 
+  # and append count variable to the data frame info_df
+  sem_fac <- as.numeric(table(factor(info_df$sem_info, levels=unique(info_df$sem_info))))
+  count_var <- unlist(lapply(sem_fac, seq))
+  for (i in 1:length(count_var)) {
+    count_var[i] <- paste("Date ", count_var[i])
+  }
+  info_df$count_var <- count_var
+  
+  # if not all semester shall be considered, create a subset of info_df for the corresponding semesters
+  if (semester_vec != "all"){
+    sub_df <- data.frame(sem_info=character(), date_info=character(), mean_info=numeric(), count_var=integer())
+    # subset data frame
+    for (i in 1:length(info_df$sem_info)) {
+      for (j in 1:length(semester_vec)) {
+        if (info_df$sem_info[i] == semester_vec[j]){
+          sub_df <- rbind(sub_df, info_df[i,])
+        }
+      }
+    }
+    info_df <- sub_df
+  }
+  
+  # convert exam date in info_df to date format
+  info_df$date_info <- as.Date(info_df[,2], "%d.%m.%Y") 
+  
+  # transform info_df to wide format to group exam dates by count variable
+  info_df <- spread(info_df, count_var, mean_info) #transform to wide format
+  res <- apply(info_df[,c(3:ncol(info_df))], MARGIN = 2, FUN = mean, na.rm = T)
+  result_vector <- list(Exam_date = names(res), Mean = res)
+  
+  # define a class object (S3)
+  attr(result_vector, "class") <- "date_compare"
+  
+  # return the result
+  return(result_vector)
+  }
+
+# define the representation of the date_compare2 function
+print.date_compare <- function(obj){
+  cat("Exam date =", obj$Exam_date, "\n")
+  cat("Mean =", obj$Mean, "\n")
+}
 
 
 date_compare_old <- function(sem_vec, faculty, module, plot = FALSE){
