@@ -1020,6 +1020,17 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
   # semster_vec has to be a character vector with semester entries in the form "WSYY" for winter semester
   # and "SoSeYY" for summer semester
   
+  # create error messages for wrong data input (faculty_nr and module)
+  # check faculty_nr
+  if (any(grepl(faculty_nr, faculty_df$value)) == FALSE){
+    stop("The chosen faculty_nr is not in the correct form or does not exist.")
+  }
+  # check module
+  module_list <- list_modules(faculty_nr)
+  if (any(grepl(module, module_list$label)) == FALSE){
+    stop("The chosen module was entered in the wrong form or it is not a module of the chosen faculty.")
+  }  
+  
   # create the data depending on the parameters
   if (download==FALSE && is.na(FacData)){
     stop("Wrong data type. A list with the faculty data is required. Either set download to TRUE or provide
@@ -1034,13 +1045,20 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
       semester_nr <- unlist(lapply(sem_new, semester_data))
       
       #replace module name by module value
-      module_list <- list_modules(faculty_nr)
       module_info <- module_list[grepl(module, module_list$label) == TRUE, ][1,] # use first entry: for 'counted' module names (like 'Econometrics I' you also get entries for 'Econometrics II' etc. --> you only need 'Econometrics I' (= first) entry      
       module_nr <- as.numeric(module_info$value)
       
       # use module_data function to get the data for the chosen mosule and semesters
       FacData <- lapply(semester_nr, module_data, faculty = faculty_nr, module = module_nr)
     } #else: FacData = FacData if download = FALSE and data provided
+  }
+
+  # check semester_vec (create error messages for wrong data input)
+  for (i in 1:length(semester_vec)) {
+    if (semester_vec != "all" && any(grepl(semester_vec[i], FacData)) == FALSE){
+      stop("One or more semester entries of the semester_vec were not entered in the correct form or 
+           are not available for the chosen module.")
+    }
   }
 
   # extract semesters for all modul entries and reorder the resulting vector bottom-up 
@@ -1106,15 +1124,14 @@ print.date_compare <- function(obj){
   cat("Mean =", obj$Mean, "\n")
 }
 
-#To Do: Fehlermeldungen
-#To Do: use modul_data as download function instead of faculty_down
-
 
 date_compare2(12, "Econometrics I", download = TRUE)
 date_compare2(12, "Econometrics I", download = FALSE, FacData = Wiwi_data)
 sem_vec <- c("WS16/17", "SoSe17", "WS17/18", "SoSe18")
 date_compare2(12, "Econometrics I", semester_vec = sem_vec, download = TRUE) # Ergebnis stimmt trotz Warnmeldung
 date_compare2(12, "Econometrics I", semester_vec = sem_vec, download = FALSE, FacData = Wiwi_data) # Ergebnis stimmt trotz Warnmeldung
+
+
 
 
 # bei download=TRUE ist Funktion wesentlich schneller bei Anwendung der module_data-Funktion, anstelle der faculty_down-Funktion!
