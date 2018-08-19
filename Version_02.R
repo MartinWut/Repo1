@@ -885,8 +885,8 @@ faculty_semCompare <- function(faculty_vec, semester){
 
 examiner_compare <- function(sem_vec, faculty, module, plot=FALSE){
   res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
-  examiner_entries <- unlist(sapply(res_allSem, function(x){x[15]}))            
-  grade_entries <- unlist(sapply(res_allSem, function(x){x[18]}))
+  examiner_entries <- unlist(sapply(res_allSem, function(x){x[4]}))            
+  grade_entries <- unlist(sapply(res_allSem, function(x){x[8]}))
   grade_entries <- as.numeric(gsub("-", NA,  grade_entries))
   res_df <- na.omit(data.frame(examiner_entries, grade_entries))
   ex_comp <- sort(tapply(res_df$grade_entries, list(res_df$examiner_entries), mean))
@@ -937,6 +937,56 @@ econometricsI
 # with plot
 econometricsI <- examiner_compare(semester_winter, 12,217, plot = TRUE)
 econometricsI
+
+
+####  examiner_compare function with possible use of downloaded data ####
+
+examiner_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE, FacData=NA){
+  
+  # create the data depending on the parameters
+  if (download==FALSE && is.na(FacData)){
+    stop("Wrong data type. A list with the faculty data is required. Either set download to TRUE or provide
+         the faculty data, if download is set to FALSE")
+  }else{
+    if (download==TRUE){
+      
+      # replace semester names by semester values
+      sem_replace <- gsub("WS", "WS 20", semester_vec)
+      sem_replace <- gsub("/", "/20", sem_replace)
+      sem_replace <- gsub("SoSe", "SS 20", sem_replace)
+      semester_nr <- unlist(lapply(sem_replace, semester_data))
+      
+      #replace module name by module value
+      module_list <- list_modules(faculty_nr)
+      module_info <- module_list[grepl(module, module_list$label) == TRUE, ][1,] # use first entry: for 'counted' module names (like 'Econometrics I' you also get entries for 'Econometrics II' etc. --> you only need 'Econometrics I' (= first) entry      
+      module_nr <- as.numeric(module_info$value)
+      
+      # use module_data function to get the data for the chosen mosule and semesters
+      FacData <- lapply(semester_nr, module_data, faculty = faculty_nr, module = module_nr)
+    } #else: FacData = FacData if download = FALSE and data provided
+  }  
+  
+  # extract examiner names for all modul entries
+  examiner_entries <- unlist(sapply(FacData, function(x)x[4][x[3] == module])) 
+  
+  # extract the grade means for all modul entries and replace the missing values by NAs
+  grade_entries <- unlist(sapply(FacData, function(x)x[8][x[3] == module]))
+  grade_entries <- as.numeric(gsub("-", NA,  grade_entries))
+  
+  # save examiner names and the corresponding grade means in a data frame
+  res_df <- na.omit(data.frame(examiner_entries, grade_entries))
+  
+  # compute grade means for all examiners and sort the entries according to the grade means in increasing order
+  ex_comp <- sort(tapply(res_df$grade_entries, list(res_df$examiner_entries), mean))
+#  result_vector <- list(Examiner_names = names(ex_comp), Mean = ex_comp)
+  return(ex_comp)
+}
+
+#checken: unterschiedliche Outputs bei download = T und F
+
+examiner_compare2(12, "Econometrics I", semester_vec = sem_vec, download = TRUE)
+examiner_compare2(12, "Econometrics I", semester_vec = sem_vec, download = FALSE, FacData = Wiwi_data)
+
 
 
 ###################################################################################
@@ -1042,7 +1092,7 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
       sem_replace <- gsub("WS", "WS 20", semester_vec)
       sem_replace <- gsub("/", "/20", sem_replace)
       sem_replace <- gsub("SoSe", "SS 20", sem_replace)
-      semester_nr <- unlist(lapply(sem_new, semester_data))
+      semester_nr <- unlist(lapply(sem_replace, semester_data))
       
       #replace module name by module value
       module_info <- module_list[grepl(module, module_list$label) == TRUE, ][1,] # use first entry: for 'counted' module names (like 'Econometrics I' you also get entries for 'Econometrics II' etc. --> you only need 'Econometrics I' (= first) entry      
