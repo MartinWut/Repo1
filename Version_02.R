@@ -1080,8 +1080,7 @@ date_compare(semester_df$value, 12, 217)
 
 ####  date_compare function with possible use of downloaded data ####
 
-date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE, FacData=NA){
-  # module has to be a character string identical to the spelling in FlexStat (e.g "Econometrics I)
+date_compare2 <- function(faculty_nr, module_nr, semester_vec="all", download=FALSE, FacData=NA){
   # semster_vec has to be a character vector with semester entries in the form "WSYY" for winter semester
   # and "SoSeYY" for summer semester
   
@@ -1092,8 +1091,8 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
   }
   # check module
   module_list <- list_modules(faculty_nr)
-  if (any(grepl(module, module_list$label)) == FALSE){
-    stop("The chosen module was entered in the wrong form or it is not a module of the chosen faculty.")
+  if (any(grepl(module_nr, module_list$value)) == FALSE){
+    stop("The chosen module number does not exist for the chosen faculty.")
   }  
   
   # create the data depending on the parameters
@@ -1104,20 +1103,21 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
     if (download==TRUE){
       
       # replace semester names by semester values
-      sem_replace <- gsub("WS", "WS 20", semester_vec)
-      sem_replace <- gsub("/", "/20", sem_replace)
-      sem_replace <- gsub("SoSe", "SS 20", sem_replace)
-      semester_nr <- unlist(lapply(sem_replace, semester_data))
-      
-      #replace module name by module value
-      module_info <- module_list[grepl(module, module_list$label) == TRUE, ][1,] # use first entry: for 'counted' module names (like 'Econometrics I' you also get entries for 'Econometrics II' etc. --> you only need 'Econometrics I' (= first) entry      
-      module_nr <- as.numeric(module_info$value)
+      if (semester_vec == "all"){
+        semester_list <- lapply(semester_vec, semester_data)
+        semester_nr <- semester_list[[1]][,2]
+      }else{
+        sem_replace <- gsub("WS", "WS 20", semester_vec)
+        sem_replace <- gsub("/", "/20", sem_replace)
+        sem_replace <- gsub("SoSe", "SS 20", sem_replace)
+        semester_nr <- unlist(lapply(sem_replace, semester_data))
+      }
       
       # use module_data function to get the data for the chosen mosule and semesters
       FacData <- lapply(semester_nr, module_data, faculty = faculty_nr, module = module_nr)
     } #else: FacData = FacData if download = FALSE and data provided
   }
-
+  
   # check semester_vec (create error messages for wrong data input)
   for (i in 1:length(semester_vec)) {
     if (semester_vec != "all" && any(grepl(semester_vec[i], FacData)) == FALSE){
@@ -1125,20 +1125,26 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
            are not available for the chosen module.")
     }
   }
-
+  
+  #replace module_nr by module name
+  module_info <- module_list[grepl(module_nr, module_list$value) == TRUE, ]      
+  start_val <- regexpr(" ", module_info$label)[1] + 1 #get first letter of course name = first letter after first whitespace (after module label, e.g "M-WIWI...")
+  stop_val <- nchar(module_info$label)
+  module_name <- substr(module_info$label, start_val, stop_val)
+  
   # extract semesters for all modul entries and reorder the resulting vector bottom-up 
   # to have the semester entries for the first exam dates always listed first
-  sem_info <- unlist(sapply(FacData, function(x)x[1][x[3] == module]))
+  sem_info <- unlist(sapply(FacData, function(x)x[1][x[3] == module_name]))
   sem_info <- sem_info[length(sem_info):1]
-
+  
   # extract exam dates for all modul entries and reorder the resulting vector bottom-up 
   # to have the first exam dates always listed first
-  date_info <- unlist(sapply(FacData, function(x)x[2][x[3] == module]))
+  date_info <- unlist(sapply(FacData, function(x)x[2][x[3] == module_name]))
   date_info <- date_info[length(date_info):1]
   
   # extract the grade means for all modul entries, reorder the resulting vector bottom-up
   # and replace the missing values by NAs
-  mean_info  <- unlist(sapply(FacData, function(x)x[8][x[3] == module])) 
+  mean_info  <- unlist(sapply(FacData, function(x)x[8][x[3] == module_name])) 
   mean_info <- mean_info[length(mean_info):1]
   mean_info <- as.numeric(gsub("-", NA, mean_info))
   
@@ -1157,7 +1163,7 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
   # if not all semester shall be considered, create a subset of info_df for the corresponding semesters
   if (semester_vec != "all"){
     sub_df <- data.frame(sem_info=character(), date_info=character(), mean_info=numeric(), count_var=integer())
-      # subset data frame
+    # subset data frame
     for (i in 1:length(info_df$sem_info)) {
       for (j in 1:length(semester_vec)) {
         if (info_df$sem_info[i] == semester_vec[j]){
@@ -1165,7 +1171,7 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
         }
       }
     }
-  info_df <- sub_df
+    info_df <- sub_df
   }
   
   # convert exam date in info_df to date format
@@ -1181,7 +1187,7 @@ date_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE
   
   # return the result
   return(result_vector)
-}
+  }
 
 # define the representation of the date_compare2 function
 print.date_compare <- function(obj){
@@ -1190,11 +1196,11 @@ print.date_compare <- function(obj){
 }
 
 
-date_compare2(12, "Econometrics I", download = TRUE)
-date_compare2(12, "Econometrics I", download = FALSE, FacData = Wiwi_data)
+date_compare2(12, 217, download = TRUE)
+date_compare2(12, 217, download = FALSE, FacData = Wiwi_data)
 sem_vec <- c("WS16/17", "SoSe17", "WS17/18", "SoSe18")
-date_compare2(12, "Econometrics I", semester_vec = sem_vec, download = TRUE) # Ergebnis stimmt trotz Warnmeldung
-date_compare2(12, "Econometrics I", semester_vec = sem_vec, download = FALSE, FacData = Wiwi_data) # Ergebnis stimmt trotz Warnmeldung
+date_compare2(12, 217, semester_vec = sem_vec, download = TRUE) # Ergebnis stimmt trotz Warnmeldung
+date_compare2(12, 217, semester_vec = sem_vec, download = FALSE, FacData = Wiwi_data) # Ergebnis stimmt trotz Warnmeldung
 
 
 
