@@ -381,6 +381,8 @@ module_mean(semester_vec, 12, 217)
 
 
 ############ Alternative module_mean-function
+#############################################
+
 
 module_mean2 <- function(semester_vector = "all", faculty_nr= NA, module_nr=NA){
   
@@ -406,8 +408,11 @@ module_mean2 <- function(semester_vector = "all", faculty_nr= NA, module_nr=NA){
     
   # clean the data -> remove empty semester entries
     index_df <- which(sapply(tmp1, length) == 0)
-    tmp1 <- tmp1[-index_df]  
-  # remove entries with NA's for mean-value
+    if (length(index_df) > 0) {
+      tmp1 <- tmp1[-index_df]
+    }
+    
+  # remove entries with NA's as mean-value
     for (j in 1:length(tmp1)) {
       tmp1[[j]] <- subset(tmp1[[j]], tmp1[[j]][8] != "-" & tmp1[[j]][,8] != "" )
     } 
@@ -417,13 +422,19 @@ module_mean2 <- function(semester_vector = "all", faculty_nr= NA, module_nr=NA){
     if (length(index_df) > 0) {
       tmp1 <- tmp1[-index_df]
     }
-  
-  # compute the mean for the cleaned data  
-    mean_values <- sapply(tmp1,function(x){x[8]}) 
-    mean_values <- unlist(mean_values)
-    numeric_values <- as.numeric(mean_values)
-    overall_mean <- mean(numeric_values)
+    
+    if (sum(lengths(tmp1)) == 0 ) {
+      overall_mean <- 0
+    }else{
+      
+      # compute the mean for the cleaned data  
+      mean_values <- sapply(tmp1,function(x){x[8]}) 
+      mean_values <- unlist(mean_values)
+      numeric_values <- as.numeric(mean_values)
+      overall_mean <- mean(numeric_values)
     }
+  }
+    
   }else{
     
    # Third Case: Mean value for certain semesters ( more/equal than/to 1 but not all semesters)  
@@ -435,7 +446,10 @@ module_mean2 <- function(semester_vector = "all", faculty_nr= NA, module_nr=NA){
       
       # clean the data -> remove empty semester entries
       index_df <- which(sapply(tmp1, length) == 0)
-      tmp1 <- tmp1[-index_df]  
+      if (length(index_df) > 0) {
+        tmp1 <- tmp1[-index_df]
+      }
+      
       # remove entries with NA's for mean-value
       for (j in 1:length(tmp1)) {
         tmp1[[j]] <- subset(tmp1[[j]], tmp1[[j]][8] != "-" & tmp1[[j]][,8] != "" )
@@ -443,7 +457,9 @@ module_mean2 <- function(semester_vector = "all", faculty_nr= NA, module_nr=NA){
       
       # in some cases this will create a new list element with NA's because there is sometime just one observation for a certain module
       index_df <- which(sapply(tmp1, nrow) == 0)
-      tmp1 <- tmp1[-index_df]
+      if (length(index_df) > 0) {
+        tmp1 <- tmp1[-index_df]
+      }
       
       # compute the mean for the cleaned data  
       mean_values <- sapply(tmp1,function(x){x[8]}) 
@@ -507,10 +523,9 @@ test_5
 saveRDS(test_5, "wiwi_module_means")
 wiwi_module_means <- readRDS("wiwi_module_means")
 
-# bei test_5[[3]] NaN
-module_mean2(semester_vector = "all", faculty_nr = 12, module_nr = 114)
 
-
+# Plot with all modules for wiwi-faculty (see wiwi_module_data)
+plotFS(wiwi_module_means)
 
 
 
@@ -968,7 +983,7 @@ examiner_stud(semester_winter, 12, 113,mean=TRUE, plot = TRUE)
 
 date_compare <- function(sem_vec, faculty, module, plot = FALSE){
   res_allSem <- lapply(sem_vec, module_data, faculty = faculty, module = module)
-  # save the infomrations in date.frame
+  # save the informations in date.frame
   sem_info <- unlist(sapply(res_allSem, function(x){x[1]}))
   date_info <- unlist(sapply(res_allSem, function(x){x[2]}))
   mean_info  <- unlist(sapply(res_allSem, function(x){x[8]}))
@@ -1260,11 +1275,18 @@ plotFS.list <- function(x){
     }  
     
     df <- data.frame(module_means, module_names)
+    
+    if (length(df[,1]) > 10) {
+      print("More than 10 modules selected. The 10 highest module-means will be displayed")
+      df <- arrange(df, desc(module_means))
+      df <- df[1:10,]
+    }
     ggplot(df, aes(x = module_names, y = module_means, fill=module_names))+
       geom_bar(stat = "identity")+
       xlab("Module") + ylab("Mean grades") +
       coord_cartesian(ylim=c(min(df$module_means-0.5),max(df$module_means)+0.5)) +
-      guides(fill=guide_legend(title=NULL)) 
+      guides(fill=guide_legend(title=NULL)) +
+      theme( axis.text.x = element_blank())
     }
   }
 }
@@ -1289,9 +1311,9 @@ plotFS(test8)
 # test for comparison of module means
 module_test_vec <- c(217,104,109)
 test_3 <- lapply(module_test_vec, module_mean2, semester_vector = "all", faculty_nr = 12 )
-
 plotFS(test_3)
-plotFS(test_5)
+
+plotFS(wiwi_module_means)
 
 
 
