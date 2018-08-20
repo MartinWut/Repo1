@@ -997,10 +997,89 @@ examiner_compare2 <- function(faculty_nr, module, semester_vec="all", download=F
   return(ex_comp)
 }
 
-#checken: unterschiedliche Outputs bei download = T und F
 
-examiner_compare2(12, "Econometrics I", semester_vec = sem_vec, download = TRUE)
-examiner_compare2(12, "Econometrics I", semester_vec = sem_vec, download = FALSE, FacData = Wiwi_data)
+examiner_compare2 <- function(faculty_nr, module_nr, semester_vec="all", download=FALSE, FacData=NA){
+  
+  # create the data depending on the parameters
+  if (download==FALSE && is.na(FacData)){
+    stop("Wrong data type. A list with the faculty data is required. Either set download to TRUE or provide
+         the faculty data, if download is set to FALSE")
+  }else{
+    if (download==TRUE){
+      
+      # replace semester names by semester values
+      if (semester_vec == "all"){
+        semester_list <- lapply(semester_vec, semester_data)
+        semester_nr <- semester_list[[1]][,2]
+      }else{
+        sem_replace <- gsub("WS", "WS 20", semester_vec)
+        sem_replace <- gsub("/", "/20", sem_replace)
+        sem_replace <- gsub("SoSe", "SS 20", sem_replace)
+        semester_nr <- unlist(lapply(sem_replace, semester_data))
+      }
+
+      # use module_data function to get the data for the chosen mosule and semesters
+      FacData <- lapply(semester_nr, module_data, faculty = faculty_nr, module = module_nr)
+    } #else: FacData = FacData if download = FALSE and data provided
+  } 
+  
+  #replace module_nr by module name
+  module_info <- module_list[grepl(module_nr, module_list$value) == TRUE, ]      
+  start_val <- regexpr(" ", module_info$label)[1] + 1 #get first letter of course name = first letter after first whitespace (after module label, e.g "M-WIWI...")
+  stop_val <- nchar(module_info$label)
+  module_name <- substr(module_info$label, start_val, stop_val)
+  
+  # extract semesters for all modul entries 
+  semester_entries <- unlist(sapply(FacData, function(x)x[1][x[3] == module_name]))
+  
+  # extract examiner names for all modul entries
+  examiner_entries <- unlist(sapply(FacData, function(x)x[4][x[3] == module_name])) 
+  
+  # extract the grade means for all modul entries and replace the missing values by NAs
+  grade_entries <- unlist(sapply(FacData, function(x)x[8][x[3] == module_name]))
+  grade_entries <- as.numeric(gsub("-", NA,  grade_entries))
+  
+  # save examiner names and the corresponding grade means in a data frame
+  res_df <- na.omit(data.frame(semester_entries, examiner_entries, grade_entries))
+  
+  # if not all semester shall be considered, create a subset of info_df for the corresponding semesters
+  if (semester_vec != "all"){
+    sub_df <- data.frame(semester_entries=character(), examiner_entries=character(), grade_entries=numeric())
+    # subset data frame
+    for (i in 1:length(res_df$semester_entries)) {
+      for (j in 1:length(semester_vec)) {
+        if (res_df$semester_entries[i] == semester_vec[j]){
+          sub_df <- rbind(sub_df, res_df[i,])
+        }
+      }
+    }
+    res_df <- sub_df
+  }
+  
+  # compute grade means for all examiners and sort the entries according to the grade means in increasing order
+  ex_comp <- sort(tapply(res_df$grade_entries, list(res_df$examiner_entries), mean))
+  ex_comp <- list(Examiner_names = names(ex_comp), Mean = ex_comp)
+  
+  # define a class object (S3)
+  attr(ex_comp, "class") <- "examiner_compare"
+  
+  # return the result
+  return(ex_comp)
+}
+
+# define the representation of the date_compare2 function
+print.examiner_compare <- function(obj){
+  cat("Examiner =", obj$Examiner_names, "\n")
+  cat("Mean =", obj$Mean, "\n")
+}
+
+
+
+examiner_compare2(12, 217, download = TRUE)
+examiner_compare2(12, 217, download = FALSE, FacData = Wiwi_data)
+
+examiner_compare2(12, 217, semester_vec = sem_vec, download = TRUE)
+examiner_compare2(12, 217, semester_vec = sem_vec, download = FALSE, FacData = Wiwi_data)
 
 
 
