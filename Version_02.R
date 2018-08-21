@@ -1024,6 +1024,7 @@ examiner_compare2 <- function(faculty_nr, module_nr, semester_vec="all", downloa
   } 
   
   #replace module_nr by module name
+  module_list <- list_modules(faculty_nr)
   module_info <- module_list[grepl(module_nr, module_list$value) == TRUE, ]      
   start_val <- regexpr(" ", module_info$label)[1] + 1 #get first letter of course name = first letter after first whitespace (after module label, e.g "M-WIWI...")
   stop_val <- nchar(module_info$label)
