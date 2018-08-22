@@ -241,6 +241,10 @@ module_data(64, 125, 217)
 module_data(64, 125, 1024)
 
 
+# Unit test (testthat package)
+test_file("C:/Users/gerle/Desktop/Statistische Programmierung mit R/Repo1/test_module_data.R")
+
+
 
 #################################################################
 ## 2.1 Downloading the data                                    ##
