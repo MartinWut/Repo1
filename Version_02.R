@@ -30,6 +30,8 @@ library(stringr)
 library(tidyr)
 #install.packages("rlist")
 #library(rlist)
+#install.packages("testthat")
+library(testthat)
 
 
 
@@ -182,19 +184,38 @@ list_modules(12)
 ## 2. 1 faculty, 1 module, 1 semester ##
 ########################################
 
+
 module_data <- function(semester, faculty, module){
+  
+  # create error messages for wrong data input 
+  # check semester value
+  if (any(grepl(semester, semester_df$value)) == FALSE){
+    stop("The chosen semester value was not entered in the correct form or does not exist.")
+  }
+  
+  # check faculty value
+  if (any(grepl(faculty, faculty_df$value)) == FALSE){
+    stop("The chosen faculty value was not entered in the correct form or does not exist.")
+  }
+  
+  # check module value
+  module_list <- list_modules(faculty)
+  if (any(grepl(module, module_list$value)) == FALSE){
+    stop("The chosen module value was not entered in the correct form or does not exist for the chosen faculty.")
+  }
+  
   results_file <- readChar("json/request.json", file.info("json/request.json")$size)
   #for (i in semester) {  ## diese drei loops sind überflüssig
   #  for (j in faculty) {
   #    for (k in module) {
-        semester_list <- paste('"lastValue":"', semester, '"')
-        results_list <- sub('"lastValue":"60"',semester_list, results_file)
-        
-        faculty_list <- paste('"lastValue":"', faculty, '"')
-        results_list <- sub('"lastValue":"12"',faculty_list, results_list)
-        
-        module_list <- paste('"lastValue":"', module, '"')
-        results_list <- sub('"lastValue":"112"',module_list, results_list)
+  semester_list <- paste('"lastValue":"', semester, '"')
+  results_list <- sub('"lastValue":"60"',semester_list, results_file)
+  
+  faculty_list <- paste('"lastValue":"', faculty, '"')
+  results_list <- sub('"lastValue":"12"',faculty_list, results_list)
+  
+  module_list <- paste('"lastValue":"', module, '"')
+  results_list <- sub('"lastValue":"112"',module_list, results_list)
   bodyList <- list(data = results_list)
   records <- data.frame(matrix(nrow = 0, ncol = 21))
   flex_url <- "https://pruefungsverwaltung.uni-goettingen.de/statistikportal/api/queryexecution/results"
@@ -205,7 +226,7 @@ module_data <- function(semester, faculty, module){
   
   # ordnen der Spalten (nur, wenn der resultierende Data.Frame nicht leer ist)
   if(length(responseDF) != 0 ){
-  responseDF <- responseDF[,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
+    responseDF <- responseDF[,c(17,12,2,15,20,14,3,18,5,4,6,21,7,16,1,8,13,19,9,11,10)]
   }
   
   return(responseDF)
@@ -214,7 +235,10 @@ module_data <- function(semester, faculty, module){
 ÖkoI <- module_data(64, 12, 217)
 ÖkoI
 
+module_data("fünf", 12, 217)
+module_data(64, 125, 217)
 
+module_data(64, 125, 1024)
 
 
 
@@ -956,48 +980,6 @@ econometricsI
 
 ####  examiner_compare function with possible use of downloaded data ####
 
-examiner_compare2 <- function(faculty_nr, module, semester_vec="all", download=FALSE, FacData=NA){
-  
-  # create the data depending on the parameters
-  if (download==FALSE && is.na(FacData)){
-    stop("Wrong data type. A list with the faculty data is required. Either set download to TRUE or provide
-         the faculty data, if download is set to FALSE")
-  }else{
-    if (download==TRUE){
-      
-      # replace semester names by semester values
-      sem_replace <- gsub("WS", "WS 20", semester_vec)
-      sem_replace <- gsub("/", "/20", sem_replace)
-      sem_replace <- gsub("SoSe", "SS 20", sem_replace)
-      semester_nr <- unlist(lapply(sem_replace, semester_data))
-      
-      #replace module name by module value
-      module_list <- list_modules(faculty_nr)
-      module_info <- module_list[grepl(module, module_list$label) == TRUE, ][1,] # use first entry: for 'counted' module names (like 'Econometrics I' you also get entries for 'Econometrics II' etc. --> you only need 'Econometrics I' (= first) entry      
-      module_nr <- as.numeric(module_info$value)
-      
-      # use module_data function to get the data for the chosen mosule and semesters
-      FacData <- lapply(semester_nr, module_data, faculty = faculty_nr, module = module_nr)
-    } #else: FacData = FacData if download = FALSE and data provided
-  }  
-  
-  # extract examiner names for all modul entries
-  examiner_entries <- unlist(sapply(FacData, function(x)x[4][x[3] == module])) 
-  
-  # extract the grade means for all modul entries and replace the missing values by NAs
-  grade_entries <- unlist(sapply(FacData, function(x)x[8][x[3] == module]))
-  grade_entries <- as.numeric(gsub("-", NA,  grade_entries))
-  
-  # save examiner names and the corresponding grade means in a data frame
-  res_df <- na.omit(data.frame(examiner_entries, grade_entries))
-  
-  # compute grade means for all examiners and sort the entries according to the grade means in increasing order
-  ex_comp <- sort(tapply(res_df$grade_entries, list(res_df$examiner_entries), mean))
-#  result_vector <- list(Examiner_names = names(ex_comp), Mean = ex_comp)
-  return(ex_comp)
-}
-
-
 examiner_compare2 <- function(faculty_nr, module_nr, semester_vec="all", download=FALSE, FacData=NA){
   
   # create the data depending on the parameters
@@ -1227,6 +1209,7 @@ date_compare2 <- function(faculty_nr, module_nr, semester_vec="all", download=FA
   mean_info  <- unlist(sapply(FacData, function(x)x[8][x[3] == module_name])) 
   mean_info <- mean_info[length(mean_info):1]
   mean_info <- as.numeric(gsub("-", NA, mean_info))
+ # mean_info <- as.numeric(gsub("", NA, mean_info))
   
   # save semester, date and mean information in a data frame
   info_df <- na.omit(data.frame(sem_info,date_info, mean_info)) 
